@@ -1,0 +1,99 @@
+{
+  "count": 5,
+  "totalCount": 58,
+  "_links": {
+    "self": {
+      "href": "/events/search?page[limit]=100"
+    },
+    "next": {
+      "href": "/events/search?page[limit]=5&page[after]=eyJzdGFydERhdGUiOiIyMDI2LTEwLTExVDE4OjMwOjAwLjAwMFoiLCJjcmVhdGVkQXQiOiIyMDI2LTEwLTA1VDExOjI0OjA5LjQzNVoiLCJpZCI6ImM3NzMwYjBiLTdlYTUtNDNkMC04MzA4LTg1NDZjMjUwNWEzNiJ9"
+    }
+  },
+  "_embedded": {
+    "events": [
+      {
+        "id": "a92a74f1-5e49-49ee-a925-c15f7704e8ef",
+        "productionId": "f660827c-8cd2-4ea2-878f-b3bc930edd0c",
+        "productionTypeId": "film",
+        "productionHint": {
+          "title": "Primetime 3.W.",
+          "universalIds": [
+            {
+              "type": "COMSCORE",
+              "value": "2312611"
+            }
+          ]
+        },
+        "attributes": {
+          "languageVersion": "de-DE"
+        },
+        "localizableAttributes": {},
+        "venueId": "8b3f8b34-2c01-42fb-b6b3-4f643615e750",
+        "ticketingUrl": "https://kinotickets.express/rex-koeln/booking/102591",
+        "startDate": "2026-10-11T16:30:00.000Z",
+        "endDate": "2026-10-11T18:28:00.000Z",
+        "isHidden": false,
+        "createdAt": "2026-10-05T13:35:18.988Z",
+        "updatedAt": "2026-10-07T08:10:49.733Z",
+        "_links": {
+          "self": {
+            "href": "/events/a92a74f1-5e49-49ee-a925-c15f7704e8ef?"
+          },
+          "production": {
+            "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c"
+          },
+          "productionType": {
+            "href": "/productionTypes/film"
+          },
+          "venue": {
+            "href": "/venues/8b3f8b34-2c01-42fb-b6b3-4f643615e750"
+          }
+        },
+        "_embedded": {}
+      },
+      {
+        "id": "5ed2d3e1-f1e8-4a54-ade4-38d5b2c07028",
+        "productionId": "f660827c-8cd2-4ea2-878f-b3bc930edd0c",
+        "productionTypeId": "film",
+        "productionHint": {
+          "title": "Primetime",
+          "universalIds": [
+            {
+              "type": "POS",
+              "value": "111213"
+            }
+          ]
+        },
+        "attributes": {
+          "subtitles": [
+            "de-DE"
+          ],
+          "languageVersion": "original"
+        },
+        "localizableAttributes": {},
+        "venueId": "c9737ff8-be52-4f9b-a183-5eb8794e9944",
+        "ticketingUrl": "https://www.kinoheld.de/kino/hamburg/abaton-kino-hamburg/vorstellung/587910/primetime?rb=0&ref=cv",
+        "startDate": "2026-10-11T17:00:00.000Z",
+        "endDate": "2026-10-11T18:50:00.000Z",
+        "isHidden": false,
+        "createdAt": "2026-10-05T15:09:11.797Z",
+        "updatedAt": "2026-10-07T15:33:10.640Z",
+        "_links": {
+          "self": {
+            "href": "/events/5ed2d3e1-f1e8-4a54-ade4-38d5b2c07028?"
+          },
+          "production": {
+            "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c"
+          },
+          "productionType": {
+            "href": "/productionTypes/film"
+          },
+          "venue": {
+            "href": "/venues/c9737ff8-be52-4f9b-a183-5eb8794e9944"
+          }
+        },
+        "_embedded": {}
+      }
+    ]
+  }
+}

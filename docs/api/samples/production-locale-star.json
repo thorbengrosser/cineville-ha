@@ -1,0 +1,22 @@
+{
+  "localizableAttributes": {
+    "de-DE": {
+      "description": "Chris Hansen war in den frühen 2000er Jahren das Gesicht des Reality-Formats \"To Catch A Predator\", die mit Lockvögeln Pädosexuelle im Fernsehen entlarvte. Die Show wurde ein Riesenerfolg in den USA,  […]",
+      "editorsNote": "",
+      "shortDescription": "Ein hypnotischer Trip durch die bizarre Welt des Reality-TV.",
+      "highlightDescriptions": {
+        "tip": "",
+        "filmOfTheWeek": ""
+      }
+    },
+    "en-GB": {
+      "description": "",
+      "editorsNote": "",
+      "shortDescription": "",
+      "highlightDescriptions": {
+        "tip": "",
+        "filmOfTheWeek": ""
+      }
+    }
+  }
+}

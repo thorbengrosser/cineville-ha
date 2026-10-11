@@ -1,0 +1,17 @@
+{
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "origin": "number",
+      "code": "too_big",
+      "maximum": 1000,
+      "inclusive": true,
+      "path": [
+        "page",
+        "limit"
+      ],
+      "message": "Too big: expected number to be <=1000"
+    }
+  ]
+}

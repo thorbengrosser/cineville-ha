@@ -1,0 +1,58 @@
+{
+  "count": 13,
+  "totalCount": 13,
+  "_links": {
+    "self": {
+      "href": "/venues?isHidden[eq]=false&page[limit]=1000&sort[name]=asc&collection[cities][in][]=hamburg"
+    }
+  },
+  "_embedded": {
+    "venues": [
+      {
+        "id": "800f1df6-26e9-43b9-9995-8fc48f71cdf1",
+        "name": "3001 Kino",
+        "address": {
+          "street": "Schanzenstraße ",
+          "houseNumber": "75 im Hof ",
+          "postalCode": "20357",
+          "city": "Hamburg",
+          "country": "DE",
+          "latitude": 53.562245,
+          "longitude": 9.965328
+        },
+        "attributes": {
+          "website": "https://www.3001-kino.de"
+        },
+        "localizableAttributes": {
+          "intro": "Das Programmkino im Hamburger Schanzenviertel.",
+          "ticketInfo": "",
+          "description": "Das 3001 ist ein ­Programmkino mit 91 Sitzplätzen. Es liegt mitten im Hamburger Schanzenviertel im Hof des Schanzenhofes. Auf dem Programm stehen anspruchsvolle Arthouse-Filme, Spiel- und Dokumentarfi […]",
+          "shortDescription": "Das Programmkino im Hamburger Schanzenviertel."
+        },
+        "slug": "hamburg-3001-kino",
+        "isHidden": false,
+        "createdAt": "2024-07-24T08:16:40.597Z",
+        "updatedAt": "2026-08-04T12:43:58.369Z",
+        "assets": {
+          "cover": {
+            "id": "11c4fab2-c552-4d3e-881f-532e903f8226",
+            "url": "https://culturekit-assets.imgix.net/7/assets/39b23a07-bd41-4c43-9e53-9581a13aebbb.jpg",
+            "mimeType": "image/jpeg",
+            "createdAt": "2024-09-14T06:35:38.422Z",
+            "updatedAt": "2024-09-14T06:35:38.422Z",
+            "_links": {
+              "self": {
+                "href": "/assets/11c4fab2-c552-4d3e-881f-532e903f8226"
+              }
+            }
+          }
+        },
+        "_links": {
+          "self": {
+            "href": "/venues/800f1df6-26e9-43b9-9995-8fc48f71cdf1"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "f660827c-8cd2-4ea2-878f-b3bc930edd0c",
+  "slug": "primetime_2026",
+  "title": "Primetime",
+  "attributes": {
+    "cast": [
+      "Robert Pattinson",
+      "Matthew Maher",
+      "Phoebe Bridgers",
+      "Sean Bridgers",
+      "Jessica Blackmore"
+    ],
+    "duration": 107,
+    "directors": [
+      "Lance Oppenheim"
+    ],
+    "highlights": [],
+    "releaseYear": 2026,
+    "premiereDate": "2026-09-24",
+    "spokenLanguages": [
+      "en"
+    ],
+    "contentRatingMinimumAge": null
+  },
+  "localizableAttributes": {
+    "description": "Chris Hansen war in den frühen 2000er Jahren das Gesicht des Reality-Formats \"To Catch A Predator\", die mit Lockvögeln Pädosexuelle im Fernsehen entlarvte. Die Show wurde ein Riesenerfolg in den USA,  […]",
+    "editorsNote": "",
+    "shortDescription": "Ein hypnotischer Trip durch die bizarre Welt des Reality-TV.",
+    "highlightDescriptions": {
+      "tip": "",
+      "filmOfTheWeek": ""
+    }
+  },
+  "productionTypeId": "film",
+  "assets": {
+    "cover": {
+      "id": "14e4dfb4-ae6c-4547-98b7-82b7f8572fcf",
+      "url": "https://culturekit-assets.imgix.net/7/assets/b03d5a9d-2bb5-4bdc-a93d-e37e5594e641.jpg",
+      "mimeType": "image/jpeg",
+      "createdAt": "2026-09-24T16:03:42.968Z",
+      "updatedAt": "2026-09-24T16:03:42.968Z",
+      "_links": {
+        "self": {
+          "href": "/assets/14e4dfb4-ae6c-4547-98b7-82b7f8572fcf"
+        }
+      }
+    },
+    "poster": {
+      "id": "c585012b-88b8-45ce-b7aa-b261ecd21e26",
+      "url": "https://culturekit-assets.imgix.net/7/assets/7f9f5aa5-7c7d-4685-92ad-28bc3619c411.jpg",
+      "mimeType": "image/jpeg",
+      "createdAt": "2026-09-24T16:03:43.553Z",
+      "updatedAt": "2026-09-24T16:03:43.553Z",
+      "_links": {
+        "self": {
+          "href": "/assets/c585012b-88b8-45ce-b7aa-b261ecd21e26"
+        }
+      }
+    },
+    "trailer": {
+      "id": "6d5cf12a-8ce2-4e7a-a2c7-6a1235519270",
+      "url": "https://culturekit-assets.imgix.net/7/assets/8a1940f3-60c8-4ddf-98ac-958e15d62791.mp4",
+      "mimeType": "video/mp4",
+      "createdAt": "2026-09-24T16:03:44.130Z",
+      "updatedAt": "2026-09-24T16:03:44.130Z",
+      "_links": {
+        "self": {
+          "href": "/assets/6d5cf12a-8ce2-4e7a-a2c7-6a1235519270"
+        }
+      }
+    }
+  },
+  "universalIds": [
+    {
+      "type": "COMSCORE",
+      "value": "2312611"
+    }
+  ],
+  "createdAt": "2026-09-24T16:03:42.288Z",
+  "updatedAt": "2026-10-01T08:47:00.446Z",
+  "_links": {
+    "self": {
+      "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c"
+    },
+    "events": {
+      "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c/events"
+    }
+  }
+}

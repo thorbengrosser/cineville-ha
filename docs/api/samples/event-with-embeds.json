@@ -1,0 +1,178 @@
+{
+  "id": "4d8eb6d0-c19d-44ea-a67e-5104494ed6a0",
+  "productionId": "f660827c-8cd2-4ea2-878f-b3bc930edd0c",
+  "productionTypeId": "film",
+  "productionHint": {
+    "title": "Primetime",
+    "universalIds": [
+      {
+        "type": "POS",
+        "value": "111213"
+      }
+    ]
+  },
+  "attributes": {
+    "subtitles": [
+      "de-DE"
+    ],
+    "languageVersion": "original"
+  },
+  "localizableAttributes": {},
+  "venueId": "88beb28b-cec3-43f8-b1f2-eeb7d58c1a6b",
+  "ticketingUrl": "https://www.kinoheld.de/kino/hamburg/studio-kino-hamburg/vorstellung/394795/primetime?rb=0&ref=cv",
+  "startDate": "2026-10-11T19:00:00.000Z",
+  "endDate": "2026-10-11T20:51:00.000Z",
+  "isHidden": false,
+  "createdAt": "2026-10-05T10:39:14.632Z",
+  "updatedAt": "2026-10-08T00:55:29.130Z",
+  "_links": {
+    "self": {
+      "href": "/events/4d8eb6d0-c19d-44ea-a67e-5104494ed6a0?embed[venue]=true&embed[production]=true"
+    },
+    "production": {
+      "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c"
+    },
+    "productionType": {
+      "href": "/productionTypes/film"
+    },
+    "venue": {
+      "href": "/venues/88beb28b-cec3-43f8-b1f2-eeb7d58c1a6b"
+    }
+  },
+  "_embedded": {
+    "production": {
+      "id": "f660827c-8cd2-4ea2-878f-b3bc930edd0c",
+      "slug": "primetime_2026",
+      "title": "Primetime",
+      "attributes": {
+        "cast": [
+          "Robert Pattinson",
+          "Matthew Maher",
+          "Phoebe Bridgers",
+          "Sean Bridgers",
+          "Jessica Blackmore"
+        ],
+        "duration": 107,
+        "directors": [
+          "Lance Oppenheim"
+        ],
+        "highlights": [],
+        "releaseYear": 2026,
+        "premiereDate": "2026-09-24",
+        "spokenLanguages": [
+          "en"
+        ],
+        "contentRatingMinimumAge": null
+      },
+      "localizableAttributes": {
+        "description": "Chris Hansen war in den frühen 2000er Jahren das Gesicht des Reality-Formats \"To Catch A Predator\", die mit Lockvögeln Pädosexuelle im Fernsehen entlarvte. Die Show wurde ein Riesenerfolg in den USA,  […]",
+        "editorsNote": "",
+        "shortDescription": "Ein hypnotischer Trip durch die bizarre Welt des Reality-TV.",
+        "highlightDescriptions": {
+          "tip": "",
+          "filmOfTheWeek": ""
+        }
+      },
+      "productionTypeId": "film",
+      "assets": {
+        "cover": {
+          "id": "14e4dfb4-ae6c-4547-98b7-82b7f8572fcf",
+          "url": "https://culturekit-assets.imgix.net/7/assets/b03d5a9d-2bb5-4bdc-a93d-e37e5594e641.jpg",
+          "mimeType": "image/jpeg",
+          "createdAt": "2026-09-24T16:03:42.968Z",
+          "updatedAt": "2026-09-24T16:03:42.968Z",
+          "_links": {
+            "self": {
+              "href": "/assets/14e4dfb4-ae6c-4547-98b7-82b7f8572fcf"
+            }
+          }
+        },
+        "poster": {
+          "id": "c585012b-88b8-45ce-b7aa-b261ecd21e26",
+          "url": "https://culturekit-assets.imgix.net/7/assets/7f9f5aa5-7c7d-4685-92ad-28bc3619c411.jpg",
+          "mimeType": "image/jpeg",
+          "createdAt": "2026-09-24T16:03:43.553Z",
+          "updatedAt": "2026-09-24T16:03:43.553Z",
+          "_links": {
+            "self": {
+              "href": "/assets/c585012b-88b8-45ce-b7aa-b261ecd21e26"
+            }
+          }
+        },
+        "trailer": {
+          "id": "6d5cf12a-8ce2-4e7a-a2c7-6a1235519270",
+          "url": "https://culturekit-assets.imgix.net/7/assets/8a1940f3-60c8-4ddf-98ac-958e15d62791.mp4",
+          "mimeType": "video/mp4",
+          "createdAt": "2026-09-24T16:03:44.130Z",
+          "updatedAt": "2026-09-24T16:03:44.130Z",
+          "_links": {
+            "self": {
+              "href": "/assets/6d5cf12a-8ce2-4e7a-a2c7-6a1235519270"
+            }
+          }
+        }
+      },
+      "universalIds": [
+        {
+          "type": "COMSCORE",
+          "value": "2312611"
+        }
+      ],
+      "createdAt": "2026-09-24T16:03:42.288Z",
+      "updatedAt": "2026-10-01T08:47:00.446Z",
+      "_links": {
+        "self": {
+          "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c"
+        },
+        "events": {
+          "href": "/productions/f660827c-8cd2-4ea2-878f-b3bc930edd0c/events"
+        }
+      }
+    },
+    "venue": {
+      "id": "88beb28b-cec3-43f8-b1f2-eeb7d58c1a6b",
+      "name": "Studio Kino",
+      "address": {
+        "street": "Bernstorffstraße",
+        "houseNumber": "93-95",
+        "postalCode": "22767",
+        "city": "Hamburg",
+        "country": "DE",
+        "latitude": 53.5551483,
+        "longitude": 9.9575879
+      },
+      "attributes": {
+        "website": "https://www.studio-kino.de/"
+      },
+      "localizableAttributes": {
+        "intro": "Das Studio Kino in der ehemaligen Spiegelfabrik zeigt Aktuelles in OmU und ist Heimat für Filmreihen und Festivals.",
+        "ticketInfo": "",
+        "description": "",
+        "shortDescription": "Das Studio Kino in der ehemaligen Spiegelfabrik zeigt Aktuelles in OmU und ist Heimat für Filmreihen und Festivals."
+      },
+      "slug": "hamburg-studio-kino",
+      "isHidden": false,
+      "createdAt": "2024-10-10T10:26:44.674Z",
+      "updatedAt": "2026-08-03T14:50:34.984Z",
+      "assets": {
+        "cover": {
+          "id": "d766f018-cdfc-4cea-8a75-56ee7bb63ecc",
+          "url": "https://culturekit-assets.imgix.net/7/assets/45f82bf1-f410-4428-b565-56c7b50a1476.jpeg",
+          "mimeType": "image/jpeg",
+          "createdAt": "2024-12-12T16:27:28.464Z",
+          "updatedAt": "2024-12-12T16:27:28.463Z",
+          "_links": {
+            "self": {
+              "href": "/assets/d766f018-cdfc-4cea-8a75-56ee7bb63ecc"
+            }
+          }
+        }
+      },
+      "_links": {
+        "self": {
+          "href": "/venues/88beb28b-cec3-43f8-b1f2-eeb7d58c1a6b"
+        }
+      }
+    }
+  }
+}

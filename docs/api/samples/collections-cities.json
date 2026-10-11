@@ -1,0 +1,307 @@
+{
+  "count": 21,
+  "totalCount": 21,
+  "_links": {
+    "self": {
+      "href": "/collections?collectionGroupId[eq]=cities&page[limit]=200"
+    }
+  },
+  "_embedded": {
+    "collections": [
+      {
+        "id": "hamburg",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-09-26T12:51:18.884Z",
+        "updatedAt": "2023-09-26T12:51:18.884Z",
+        "_links": {
+          "self": {
+            "href": "/collections/hamburg"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "Berlin",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-09-26T13:35:15.085Z",
+        "updatedAt": "2023-09-26T13:35:15.085Z",
+        "_links": {
+          "self": {
+            "href": "/collections/Berlin"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "Nürnberg",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-10-03T11:23:48.080Z",
+        "updatedAt": "2023-10-03T11:23:48.080Z",
+        "_links": {
+          "self": {
+            "href": "/collections/Nürnberg"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "nuernberg",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-10-03T12:03:03.683Z",
+        "updatedAt": "2023-10-03T12:03:03.683Z",
+        "_links": {
+          "self": {
+            "href": "/collections/nuernberg"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "k",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-10-03T12:12:20.277Z",
+        "updatedAt": "2023-10-03T12:12:20.277Z",
+        "_links": {
+          "self": {
+            "href": "/collections/k"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "koeln",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-10-03T12:12:25.886Z",
+        "updatedAt": "2023-10-03T12:12:25.886Z",
+        "_links": {
+          "self": {
+            "href": "/collections/koeln"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "freiburg",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-11-07T17:38:54.113Z",
+        "updatedAt": "2023-11-07T17:38:54.113Z",
+        "_links": {
+          "self": {
+            "href": "/collections/freiburg"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "bonn",
+        "collectionGroupId": "cities",
+        "createdAt": "2023-11-08T08:51:54.324Z",
+        "updatedAt": "2023-11-08T08:51:54.324Z",
+        "_links": {
+          "self": {
+            "href": "/collections/bonn"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "fuerth",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-09-01T10:07:44.309Z",
+        "updatedAt": "2024-09-01T10:07:44.309Z",
+        "_links": {
+          "self": {
+            "href": "/collections/fuerth"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "erlangen",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-10-10T12:01:10.362Z",
+        "updatedAt": "2024-10-10T12:01:10.362Z",
+        "_links": {
+          "self": {
+            "href": "/collections/erlangen"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "wuppertal",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-10-10T12:01:21.353Z",
+        "updatedAt": "2024-10-10T12:01:21.353Z",
+        "_links": {
+          "self": {
+            "href": "/collections/wuppertal"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "neue-kinos",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-10-16T18:00:13.286Z",
+        "updatedAt": "2024-10-16T18:00:13.286Z",
+        "_links": {
+          "self": {
+            "href": "/collections/neue-kinos"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "bremen",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-10-16T18:19:15.390Z",
+        "updatedAt": "2024-10-16T18:19:15.390Z",
+        "_links": {
+          "self": {
+            "href": "/collections/bremen"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "dresden",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-10-16T18:19:34.259Z",
+        "updatedAt": "2024-10-16T18:19:34.259Z",
+        "_links": {
+          "self": {
+            "href": "/collections/dresden"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "leverkusen",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-11-07T16:48:35.603Z",
+        "updatedAt": "2024-11-07T16:48:35.603Z",
+        "_links": {
+          "self": {
+            "href": "/collections/leverkusen"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "wuerzburg",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-11-07T16:48:48.420Z",
+        "updatedAt": "2024-11-07T16:48:48.420Z",
+        "_links": {
+          "self": {
+            "href": "/collections/wuerzburg"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "nu",
+        "collectionGroupId": "cities",
+        "createdAt": "2024-11-20T19:09:20.106Z",
+        "updatedAt": "2024-11-20T19:09:20.106Z",
+        "_links": {
+          "self": {
+            "href": "/collections/nu"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "potsdam",
+        "collectionGroupId": "cities",
+        "createdAt": "2025-05-23T09:45:11.332Z",
+        "updatedAt": "2025-05-23T09:45:11.331Z",
+        "_links": {
+          "self": {
+            "href": "/collections/potsdam"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "braunschweig",
+        "collectionGroupId": "cities",
+        "createdAt": "2025-06-02T12:49:43.303Z",
+        "updatedAt": "2025-06-02T12:49:43.301Z",
+        "_links": {
+          "self": {
+            "href": "/collections/braunschweig"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "duesseldorf",
+        "collectionGroupId": "cities",
+        "createdAt": "2025-08-18T14:02:05.417Z",
+        "updatedAt": "2025-08-18T14:02:05.415Z",
+        "_links": {
+          "self": {
+            "href": "/collections/duesseldorf"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      },
+      {
+        "id": "aachen",
+        "collectionGroupId": "cities",
+        "createdAt": "2026-03-16T17:07:00.416Z",
+        "updatedAt": "2026-03-16T17:07:00.414Z",
+        "_links": {
+          "self": {
+            "href": "/collections/aachen"
+          },
+          "collectionGroup": {
+            "href": "/collections-groups/cities"
+          }
+        }
+      }
+    ]
+  }
+}

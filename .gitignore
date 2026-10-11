@@ -1,0 +1,16 @@
+# Third-party app packages used for reverse engineering (never commit)
+apk/
+sources/
+*.apk
+*.xapk
+*.apkm
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
