@@ -72,7 +72,7 @@
       },
       "ratings": {
         "title": "IMDb- und Rotten-Tomatoes-Bewertungen",
-        "description": "Für die Bewertungen braucht es zwei kostenlose API-Schlüssel: [TMDB](https://www.themoviedb.org/settings/api) findet den Film (Cineville kennt nur deutsche Titel), [OMDb](https://www.omdbapi.com/apikey.aspx) liefert die Bewertungen. Beide Felder leeren schaltet die Bewertungen ab.",
+        "description": "Für die Bewertungen braucht es zwei kostenlose API-Schlüssel: [TMDB]({tmdb_url}) findet den Film (Cineville kennt nur deutsche Titel), [OMDb]({omdb_url}) liefert die Bewertungen. Beide Felder leeren schaltet die Bewertungen ab.",
         "data": {
           "tmdb_api_key": "TMDB-API-Schlüssel (v3)",
           "omdb_api_key": "OMDb-API-Schlüssel"

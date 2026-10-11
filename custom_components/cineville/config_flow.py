@@ -291,7 +291,15 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
             vol.Optional(CONF_TMDB_KEY, description={"suggested_value": data.get(CONF_TMDB_KEY)}): password,
             vol.Optional(CONF_OMDB_KEY, description={"suggested_value": data.get(CONF_OMDB_KEY)}): password,
         })
-        return self.async_show_form(step_id="ratings", data_schema=schema, errors=errors)
+        return self.async_show_form(
+            step_id="ratings",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "tmdb_url": "https://www.themoviedb.org/settings/api",
+                "omdb_url": "https://www.omdbapi.com/apikey.aspx",
+            },
+        )
 
     def _save_account(self, updates: dict[str, Any] | None) -> None:
         """Store (or with None: remove) the account and reload, since the options themselves don't change."""

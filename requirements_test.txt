@@ -1,3 +1,1 @@
-aiohttp
-pytest
-pytest-asyncio
+pytest-homeassistant-custom-component==0.13.372

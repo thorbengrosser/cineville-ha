@@ -72,7 +72,7 @@
       },
       "ratings": {
         "title": "IMDb and Rotten Tomatoes ratings",
-        "description": "Ratings need two free API keys: [TMDB](https://www.themoviedb.org/settings/api) finds the film (Cineville only has German titles), [OMDb](https://www.omdbapi.com/apikey.aspx) provides the ratings. Clear both fields to turn ratings off.",
+        "description": "Ratings need two free API keys: [TMDB]({tmdb_url}) finds the film (Cineville only has German titles), [OMDb]({omdb_url}) provides the ratings. Clear both fields to turn ratings off.",
         "data": {
           "tmdb_api_key": "TMDB API key (v3)",
           "omdb_api_key": "OMDb API key"

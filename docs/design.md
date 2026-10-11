@@ -94,4 +94,8 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    Today's films are looked up after each program update; `get_program` waits up to 8 s for missing ones and returns
    `film.ratings` (`imdb` is null below 100 votes). Card: IMDb badge (links to IMDb) and Rotten Tomatoes badge, numbers in
    the HA locale. Live check on the preview fixture: 37/41 films matched, 14 IMDb ratings shown (6 hidden for < 100 votes), 17 RT.
-7. HACS packaging, README, screenshots.
+7. ✅ **Packaging**: user-facing README (installation via HACS, options, card, action, troubleshooting, "unofficial"
+   disclaimer); GitHub Actions (`.github/workflows/validate.yml`): hassfest, HACS validation, tests, card syntax check,
+   and a weekly run of the API smoke test against the live Cineville API. Translation URLs moved into description
+   placeholders (hassfest rule). Still open: license, a GitHub release (HACS shows versions from releases), screenshots,
+   repository description/topics on GitHub (HACS validation checks them).
