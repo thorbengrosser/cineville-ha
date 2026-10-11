@@ -24,7 +24,7 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from .coordinator import CinevilleCoordinator
+    from .coordinator import CinevilleData
 
 GET_PROGRAM_SCHEMA = vol.Schema({
     vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
@@ -32,7 +32,7 @@ GET_PROGRAM_SCHEMA = vol.Schema({
 })
 
 
-def _coordinator(hass: HomeAssistant, entry_id: str | None) -> CinevilleCoordinator:
+def _runtime_data(hass: HomeAssistant, entry_id: str | None) -> CinevilleData:
     entries = [e for e in hass.config_entries.async_entries(DOMAIN) if e.state is ConfigEntryState.LOADED]
     if entry_id:
         entries = [e for e in entries if e.entry_id == entry_id]
@@ -48,7 +48,8 @@ def _coordinator(hass: HomeAssistant, entry_id: str | None) -> CinevilleCoordina
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     async def get_program(call: ServiceCall) -> ServiceResponse:
-        coordinator = _coordinator(hass, call.data.get(ATTR_CONFIG_ENTRY_ID))
+        data = _runtime_data(hass, call.data.get(ATTR_CONFIG_ENTRY_ID))
+        coordinator = data.program
         today = coordinator.today()
         day: date = call.data.get(ATTR_DATE) or today
         if not today <= day <= today + timedelta(days=MAX_DAYS_AHEAD):
@@ -59,14 +60,20 @@ def async_setup_services(hass: HomeAssistant) -> None:
             )
         program = await coordinator.async_get_program(day)
         entry = coordinator.config_entry
+        showtimes = []
+        for show in program.showtimes:
+            item = show.as_dict()
+            item["film"]["on_watchlist"], item["film"]["seen"] = data.flags(show.film.id)
+            showtimes.append(item)
         return {
             "config_entry_id": entry.entry_id,
+            "logged_in": data.account is not None and data.account.data is not None,
             "city": {"id": entry.data[CONF_CITY_ID], "name": entry.data[CONF_CITY_NAME]},
             "day": program.day.isoformat(),
             "today": today.isoformat(),
             "timezone": DEFAULT_TIMEZONE,
             "fetched_at": program.fetched_at.isoformat(),
-            "showtimes": [s.as_dict() for s in program.showtimes],
+            "showtimes": showtimes,
         }
 
     hass.services.async_register(

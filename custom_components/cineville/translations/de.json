@@ -14,30 +14,67 @@
         "data": {
           "venue_ids": "Kinos"
         }
+      },
+      "reauth_confirm": {
+        "title": "Cineville-Login erneuern",
+        "description": "Der Cineville-Login ist abgelaufen.\n\n1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
+        "data": {
+          "code": "Code"
+        }
       }
     },
     "error": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
-      "no_venues_selected": "Bitte mindestens ein Kino auswählen."
+      "no_venues_selected": "Bitte mindestens ein Kino auswählen.",
+      "invalid_code": "Das sieht nicht nach einem Code aus.",
+      "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden."
     },
     "abort": {
       "already_configured": "Diese Stadt ist bereits eingerichtet.",
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
-      "no_cities": "Cineville hat keine Städte geliefert."
+      "no_cities": "Cineville hat keine Städte geliefert.",
+      "reauth_successful": "Cineville-Login erneuert."
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "Cineville",
+        "menu_options": {
+          "venues": "Kinos",
+          "account": "Cineville-Konto"
+        }
+      },
+      "venues": {
         "title": "Kinos",
         "description": "Welche Kinos in {city} sollen dabei sein? Wenn alle ausgewählt bleiben, kommen neue Kinos automatisch dazu.",
         "data": {
           "venue_ids": "Kinos"
         }
+      },
+      "login": {
+        "title": "Cineville-Konto verbinden",
+        "description": "1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
+        "data": {
+          "code": "Code"
+        },
+        "data_description": {
+          "code": "Für Merkliste und gesehene Filme."
+        }
+      },
+      "logout": {
+        "title": "Cineville-Konto",
+        "description": "Angemeldet als **{name}**.",
+        "data": {
+          "log_out": "Abmelden"
+        }
       }
     },
     "error": {
-      "no_venues_selected": "Bitte mindestens ein Kino auswählen."
+      "no_venues_selected": "Bitte mindestens ein Kino auswählen.",
+      "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
+      "invalid_code": "Das sieht nicht nach einem Code aus.",
+      "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden."
     },
     "abort": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."
@@ -84,6 +121,14 @@
             "name": "Tickets"
           }
         }
+      },
+      "watchlist_today": {
+        "name": "Merkliste heute",
+        "state_attributes": {
+          "films": {
+            "name": "Filme"
+          }
+        }
       }
     }
   },
@@ -105,6 +150,9 @@
     },
     "date_out_of_range": {
       "message": "Das Datum muss zwischen {first} und {last} liegen."
+    },
+    "auth_expired": {
+      "message": "Der Cineville-Login ist abgelaufen. Bitte neu anmelden."
     }
   },
   "services": {

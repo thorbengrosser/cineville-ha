@@ -9,14 +9,16 @@ from zoneinfo import ZoneInfo
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .api import CinevilleClient
 from .const import (
+    ACCOUNT_UPDATE_INTERVAL,
     CONF_CITY_ID,
     CONF_CITY_NAME,
+    CONF_USER_ID,
     CONF_VENUE_IDS,
     DAY_CACHE_TTL,
     DEFAULT_DAY_START_HOUR,
@@ -24,7 +26,7 @@ from .const import (
     DOMAIN,
     UPDATE_INTERVAL,
 )
-from .exceptions import CinevilleError
+from .exceptions import CinevilleAuthError, CinevilleError
 from .models import Showtime, cineville_day, day_window
 
 _LOGGER = logging.getLogger(__name__)
@@ -105,3 +107,60 @@ class CinevilleCoordinator(DataUpdateCoordinator[Program]):
             ) from err
         self._day_cache[day] = program
         return program
+
+
+@dataclass(slots=True, frozen=True)
+class AccountData:
+    """The member's watchlist and seen films (production IDs)."""
+
+    watchlist: frozenset[str]
+    seen: frozenset[str]
+
+
+class AccountCoordinator(DataUpdateCoordinator[AccountData]):
+    """Watchlist and seen films of the logged-in member.
+
+    Kept separate from the program: if the login expires, HA asks to re-authenticate,
+    but the program keeps working.
+    """
+
+    config_entry: ConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: CinevilleClient) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=f"{DOMAIN} account",
+            update_interval=ACCOUNT_UPDATE_INTERVAL,
+        )
+        self.client = client
+
+    async def _async_update_data(self) -> AccountData:
+        user_id = self.config_entry.data[CONF_USER_ID]
+        try:
+            watchlist = await self.client.get_watchlist_ids(user_id)
+            seen = await self.client.get_seen_ids(user_id)
+        except CinevilleAuthError as err:
+            # The coordinator starts HA's re-authentication flow for this
+            raise ConfigEntryAuthFailed(translation_domain=DOMAIN, translation_key="auth_expired") from err
+        except CinevilleError as err:
+            raise UpdateFailed(
+                translation_domain=DOMAIN, translation_key="update_failed", translation_placeholders={"error": str(err)}
+            ) from err
+        return AccountData(watchlist=frozenset(watchlist), seen=frozenset(seen))
+
+
+@dataclass(slots=True)
+class CinevilleData:
+    """Runtime data of a config entry."""
+
+    program: CinevilleCoordinator
+    account: AccountCoordinator | None = None
+
+    def flags(self, production_id: str) -> tuple[bool, bool]:
+        """(on_watchlist, seen) for a film; both False when not logged in or not loaded yet."""
+        data = self.account.data if self.account else None
+        if data is None:
+            return False, False
+        return production_id in data.watchlist, production_id in data.seen

@@ -86,7 +86,10 @@ async def test_options_flow_changes_cinemas(hass: HomeAssistant, mock_client):
     await hass.async_block_till_done()
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["step_id"] == "init"
+    assert result["type"] is FlowResultType.MENU
+    assert result["menu_options"] == ["venues", "account"]
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "venues"})
+    assert result["step_id"] == "venues"
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_VENUE_IDS: ["v-abaton", "v-zeise"]}
     )

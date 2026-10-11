@@ -12,7 +12,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 
 from . import CinevilleConfigEntry
-from .coordinator import CinevilleCoordinator
+from .coordinator import AccountCoordinator, CinevilleCoordinator, CinevilleData
 from .entity import CinevilleEntity
 from .models import Showtime
 
@@ -23,8 +23,11 @@ CLOCK_TICK = timedelta(minutes=1)
 async def async_setup_entry(
     hass: HomeAssistant, entry: CinevilleConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
-    coordinator = entry.runtime_data
-    async_add_entities([UpcomingScreeningsSensor(coordinator), NextScreeningSensor(coordinator)])
+    data = entry.runtime_data
+    entities: list[SensorEntity] = [UpcomingScreeningsSensor(data.program), NextScreeningSensor(data.program)]
+    if data.account is not None:
+        entities.append(WatchlistTodaySensor(data))
+    async_add_entities(entities)
 
 
 class _ClockedSensor(CinevilleEntity, SensorEntity):
@@ -97,4 +100,47 @@ class NextScreeningSensor(_ClockedSensor):
             "end": nxt.end.isoformat() if nxt.end else None,
             "poster": nxt.film.poster_url,
             "ticketing_url": nxt.ticketing_url,
+        }
+
+
+class WatchlistTodaySensor(_ClockedSensor):
+    """Watchlist films (not seen yet) that still have a screening today. Only when logged in."""
+
+    _attr_native_unit_of_measurement = "films"
+    # Keep the film list out of the recorder; it's for the UI and automations only
+    _unrecorded_attributes = frozenset({"films"})
+
+    def __init__(self, data: CinevilleData) -> None:
+        super().__init__(data.program, "watchlist_today")
+        self._data = data
+        self._account: AccountCoordinator = data.account  # type: ignore[assignment]
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(self._account.async_add_listener(self.async_write_ha_state))
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._account.data is not None
+
+    def _films(self) -> list[Showtime]:
+        """First upcoming screening of each watchlist film, in start order."""
+        first: dict[str, Showtime] = {}
+        for show in self._upcoming():
+            on_watchlist, seen = self._data.flags(show.film.id)
+            if on_watchlist and not seen and show.film.id not in first:
+                first[show.film.id] = show
+        return list(first.values())
+
+    @property
+    def native_value(self) -> int:
+        return len(self._films())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "films": [
+                {"title": s.film.title, "start": s.start.isoformat(), "venue": s.venue.name, "language": s.language_label}
+                for s in self._films()
+            ]
         }

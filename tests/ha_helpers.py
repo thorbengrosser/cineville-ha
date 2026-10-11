@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
+import time
 from datetime import date
 
 from conftest import load_sample, make_event
-from custom_components.cineville.const import CONF_CITY_ID, CONF_CITY_NAME, CONF_VENUE_IDS, DOMAIN
+from custom_components.cineville.const import (
+    CONF_ACCOUNT_NAME,
+    CONF_CITY_ID,
+    CONF_CITY_NAME,
+    CONF_TOKENS,
+    CONF_USER_ID,
+    CONF_VENUE_IDS,
+    DOMAIN,
+)
 from custom_components.cineville.models import City, Showtime, Venue
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -34,11 +43,27 @@ def showtimes() -> list[Showtime]:
     return [Showtime.from_api(e, TODAY) for e in events]
 
 
-def mock_entry(venue_ids: list[str] | None = None) -> MockConfigEntry:
+# Production ID of "Primetime" in the sample event
+PRIMETIME = "f660827c-8cd2-4ea2-878f-b3bc930edd0c"
+USER_ID = "user-1"
+
+
+def account_data() -> dict:
+    return {
+        CONF_TOKENS: {"access_token": "access-1", "refresh_token": "refresh-1", "expires_at": time.time() + 3600},
+        CONF_USER_ID: USER_ID,
+        CONF_ACCOUNT_NAME: "Test User",
+    }
+
+
+def mock_entry(venue_ids: list[str] | None = None, *, logged_in: bool = False) -> MockConfigEntry:
+    data = {CONF_CITY_ID: "hamburg", CONF_CITY_NAME: "Hamburg"}
+    if logged_in:
+        data |= account_data()
     return MockConfigEntry(
         domain=DOMAIN,
         title="Cineville Hamburg",
         unique_id="hamburg",
-        data={CONF_CITY_ID: "hamburg", CONF_CITY_NAME: "Hamburg"},
+        data=data,
         options={CONF_VENUE_IDS: venue_ids or []},
     )

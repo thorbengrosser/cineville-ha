@@ -3,7 +3,17 @@
 Home Assistant integration for [Cineville](https://cineville.de): today's showtimes in your cinemas,
 plus your watchlist and the films you've seen.
 
-Work in progress (no login, watchlist or ratings yet).
+Work in progress (rating badges are not there yet).
+
+## Watchlist and seen films (optional)
+
+Log in under *Settings → Devices & services → Cineville → Configure → Cineville account*. Cineville has no passwords:
+you log in with your email address and a code they send you, then copy one more code from the page you end up on
+(the dialog explains how). After that, Home Assistant keeps the login fresh by itself; if it ever expires, you get a
+"re-authentication required" notice.
+
+When logged in, the card highlights films on your watchlist (or shows only those), dims films you've already seen,
+and there's a *Watchlist films today* sensor for automations.
 
 ## The card
 
@@ -16,9 +26,13 @@ view: films        # films (grouped by film) or list (chronological); switchable
 days: 7            # days in the day picker (1–8)
 show_past: false   # today: also show screenings that have already started
 # max_height: 500px  # for dashboards without a grid; in sections dashboards just resize the card
+watchlist: highlight  # highlight or only (also switchable on the card); needs the account login
+seen: dim             # dim, hide or show: films you've already seen
 # title: Kino heute
 # config_entry_id: ...   # only if you set up several cities
 ```
+
+Times and dates follow your Home Assistant profile settings (language, 12/24-hour time, time zone, date format).
 
 To work on the card without Home Assistant: `python3 -m http.server 8765` in the repo root, then open
 <http://localhost:8765/dev/preview.html>. It renders the real card with a recorded Hamburg program (`dev/fixtures/`).

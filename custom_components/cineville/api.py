@@ -174,9 +174,12 @@ class CinevilleClient:
 
     # --- member data (requires login) ----------------------------------------------------
 
+    async def get_userinfo(self) -> dict[str, Any]:
+        """OIDC userinfo: sub (= user ID), email, name, given_name, family_name."""
+        return await self._request("GET", "/connect/userinfo", authenticated=True)
+
     async def get_user_id(self) -> str:
-        info = await self._request("GET", "/connect/userinfo", authenticated=True)
-        return info["sub"]
+        return (await self.get_userinfo())["sub"]
 
     async def get_watchlist_ids(self, user_id: str) -> set[str]:
         data = await self._request("GET", f"/users/{user_id}/watchlist/production-ids", authenticated=True)

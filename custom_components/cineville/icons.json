@@ -1,11 +1,20 @@
 {
   "entity": {
     "sensor": {
-      "upcoming_screenings": { "default": "mdi:filmstrip" },
-      "next_screening": { "default": "mdi:movie-open-play" }
+      "upcoming_screenings": {
+        "default": "mdi:filmstrip"
+      },
+      "next_screening": {
+        "default": "mdi:movie-open-play"
+      },
+      "watchlist_today": {
+        "default": "mdi:bookmark-multiple"
+      }
     }
   },
   "services": {
-    "get_program": { "service": "mdi:movie-search" }
+    "get_program": {
+      "service": "mdi:movie-search"
+    }
   }
 }

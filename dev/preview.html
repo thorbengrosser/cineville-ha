@@ -8,6 +8,7 @@
     Renders the real card file with a mock `hass` that answers cineville.get_program from
     dev/fixtures/program-hamburg.json. Serve the repo root (python3 -m http.server) and open /dev/preview.html.
     Query params: ?theme=dark  &lang=en  &width=380  &view=list  &height=400  &max_height=400
+                  &login=0 (not logged in)  &time_format=12|24|language|system  &date_format=DMY|MDY|YMD  &time_zone=server
   -->
   <style>
     :root {
@@ -45,15 +46,35 @@
           border: "1px solid var(--divider-color)", color: "var(--primary-text-color)" });
       }
     });
-    const GLYPHS = { "mdi:view-agenda-outline": "▤", "mdi:format-list-bulleted": "☰", "mdi:filmstrip": "🎞" };
+    const GLYPHS = { "mdi:view-agenda-outline": "▤", "mdi:format-list-bulleted": "☰", "mdi:filmstrip": "🎞",
+      "mdi:bookmark": "★", "mdi:bookmark-outline": "☆" };
     customElements.define("ha-icon", class extends HTMLElement {
       connectedCallback() { this.textContent = GLYPHS[this.getAttribute("icon")] || "•"; }
     });
 
     const fixture = await (await fetch("fixtures/program-hamburg.json")).json();
     const today = Object.keys(fixture)[0];
+
+    // Simulate a logged-in account: mark some films as on the watchlist / seen (deterministically)
+    const loggedIn = params.get("login") !== "0";
+    const filmIds = [...new Set(Object.values(fixture).flatMap((p) => p.showtimes.map((s) => s.film.id)))].sort();
+    for (const program of Object.values(fixture)) {
+      program.logged_in = loggedIn;
+      for (const show of program.showtimes) {
+        const i = filmIds.indexOf(show.film.id);
+        show.film.on_watchlist = loggedIn && i % 4 === 0;
+        show.film.seen = loggedIn && i % 6 === 1;
+      }
+    }
+
     const hass = {
-      locale: { language: params.get("lang") || "de" },
+      locale: {
+        language: params.get("lang") || "de",
+        time_format: params.get("time_format") || "language",
+        date_format: params.get("date_format") || "language",
+        time_zone: params.get("time_zone") || "local",
+      },
+      config: { time_zone: "America/New_York" }, // so ?time_zone=server visibly differs
       connection: {
         async sendMessagePromise(msg) {
           await new Promise((r) => setTimeout(r, 300)); // simulate latency
@@ -79,7 +100,9 @@
     document.getElementById("controls").innerHTML = `Preview (fixture ${today}): ` +
       link("light", { theme: null }) + link("dark", { theme: "dark" }) +
       link("de", { lang: "de" }) + link("en", { lang: "en" }) +
-      link("phone 380px", { width: 380 }) + link("wide", { width: null });
+      link("phone 380px", { width: 380 }) + link("wide", { width: null }) +
+      link("logged out", { login: "0" }) + link("logged in", { login: null }) +
+      link("12h", { time_format: "12" }) + link("24h", { time_format: null });
   </script>
 </body>
 </html>

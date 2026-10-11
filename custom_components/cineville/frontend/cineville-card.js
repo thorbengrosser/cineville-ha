@@ -6,9 +6,10 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.1.1";
+const CARD_VERSION = "0.2.0";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
+const WATCHLIST_STORAGE_KEY = "cineville-card-watchlist-only";
 
 const STRINGS = {
   en: {
@@ -29,6 +30,11 @@ const STRINGS = {
     tickets: "Tickets",
     started: "started",
     ages: "Age",
+    watchlist: "Watchlist",
+    watchlistOnly: "Only films on my watchlist",
+    allFilms: "All films",
+    seen: "Seen",
+    emptyWatchlist: "None of your watchlist films is showing in this selection.",
     editor: {
       title: "Title",
       config_entry_id: "City (only needed if you set up several)",
@@ -36,6 +42,13 @@ const STRINGS = {
       days: "Days in the day picker",
       show_past: "Show screenings that have already started",
       max_height: "Maximum height (e.g. 500px; only for dashboards without a grid)",
+      watchlist: "Watchlist films (when logged in)",
+      watchlist_highlight: "Highlight them",
+      watchlist_only: "Show only them (switchable on the card)",
+      seen: "Films you've already seen",
+      seen_dim: "Dim",
+      seen_hide: "Hide",
+      seen_show: "Show normally",
       films: "Grouped by film",
       list: "Chronological list",
     },
@@ -58,6 +71,11 @@ const STRINGS = {
     tickets: "Tickets",
     started: "läuft",
     ages: "FSK",
+    watchlist: "Merkliste",
+    watchlistOnly: "Nur Filme von meiner Merkliste",
+    allFilms: "Alle Filme",
+    seen: "Gesehen",
+    emptyWatchlist: "Kein Film von deiner Merkliste läuft in dieser Auswahl.",
     editor: {
       title: "Titel",
       config_entry_id: "Stadt (nur nötig bei mehreren Städten)",
@@ -65,6 +83,13 @@ const STRINGS = {
       days: "Tage in der Tagesauswahl",
       show_past: "Bereits begonnene Vorstellungen anzeigen",
       max_height: "Maximale Höhe (z. B. 500px; nur für Dashboards ohne Raster)",
+      watchlist: "Filme auf der Merkliste (wenn angemeldet)",
+      watchlist_highlight: "Hervorheben",
+      watchlist_only: "Nur diese zeigen (auf der Karte umschaltbar)",
+      seen: "Bereits gesehene Filme",
+      seen_dim: "Abblenden",
+      seen_hide: "Ausblenden",
+      seen_show: "Normal anzeigen",
       films: "Nach Film gruppiert",
       list: "Chronologische Liste",
     },
@@ -123,6 +148,7 @@ class CinevilleCard extends HTMLElement {
     this._venue = "";
     this._from = null; // null = default ("now" for today, all times otherwise)
     this._view = null;
+    this._watchlistOnly = null; // null = from config, then remembered per browser
   }
 
   static getStubConfig() {
@@ -143,13 +169,28 @@ class CinevilleCard extends HTMLElement {
         { name: "days", selector: { number: { min: 1, max: 8, mode: "box" } } },
         { name: "show_past", selector: { boolean: {} } },
         { name: "max_height", selector: { text: {} } },
+        {
+          name: "watchlist",
+          selector: { select: { mode: "dropdown", options: [
+            { value: "highlight", label: t.watchlist_highlight },
+            { value: "only", label: t.watchlist_only },
+          ] } },
+        },
+        {
+          name: "seen",
+          selector: { select: { mode: "dropdown", options: [
+            { value: "dim", label: t.seen_dim },
+            { value: "hide", label: t.seen_hide },
+            { value: "show", label: t.seen_show },
+          ] } },
+        },
       ],
       computeLabel: (schema) => t[schema.name] || schema.name,
     };
   }
 
   setConfig(config) {
-    this._config = { view: "films", days: 7, show_past: false, ...config };
+    this._config = { view: "films", days: 7, show_past: false, watchlist: "highlight", seen: "dim", ...config };
     this._config.days = Math.max(1, Math.min(8, Number(this._config.days) || 7));
     if (this._hass) this._render();
   }
@@ -218,14 +259,59 @@ class CinevilleCard extends HTMLElement {
       }
       this._view = stored === "films" || stored === "list" ? stored : this._config.view;
     }
+    if (this._watchlistOnly === null) {
+      let stored = null;
+      try {
+        stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+      } catch {
+        /* storage unavailable */
+      }
+      this._watchlistOnly = stored === null ? this._config.watchlist === "only" : stored === "1";
+    }
   }
 
-  _fmtTime(iso, tz) {
-    return new Intl.DateTimeFormat(this._lang, { hour: "2-digit", minute: "2-digit", timeZone: tz }).format(new Date(iso));
+  /**
+   * Formatting settings from the user's HA profile: language, time format (language/system/12/24),
+   * time zone (local = browser, server = HA's configured zone) and date format (language/system/DMY/MDY/YMD).
+   */
+  get _fmt() {
+    const locale = this._hass?.locale || {};
+    const language = locale.language || this._hass?.language || navigator.language || "en";
+    const timeZone = locale.time_zone === "server" ? this._hass?.config?.time_zone || undefined : undefined;
+    let hour12;
+    if (locale.time_format === "12") hour12 = true;
+    else if (locale.time_format === "24") hour12 = false;
+    else if (locale.time_format === "system") hour12 = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12;
+    const key = [language, timeZone, hour12, locale.date_format].join("|");
+    if (this._fmtCache?.key !== key) {
+      // 12-hour clocks read better without a leading zero ("7:30 PM"), 24-hour ones with ("07:30")
+      const probe = new Intl.DateTimeFormat(language, { hour: "numeric", hour12 });
+      const twelve = probe.resolvedOptions().hour12;
+      const hour = twelve ? "numeric" : "2-digit";
+      this._fmtCache = {
+        key,
+        language,
+        timeZone,
+        dateFormat: locale.date_format || "language",
+        time: new Intl.DateTimeFormat(language, { hour, minute: "2-digit", hour12, timeZone }),
+        // Formats a bare hour for the "from" filter labels (UTC, so no zone shift)
+        hourLabel: new Intl.DateTimeFormat(language, { hour, minute: "2-digit", hour12, timeZone: "UTC" }),
+      };
+    }
+    return this._fmtCache;
   }
 
-  _hourInTz(iso, tz) {
-    const parts = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz }).formatToParts(new Date(iso));
+  _fmtTime(iso) {
+    return this._fmt.time.format(new Date(iso));
+  }
+
+  _fmtHour(hour) {
+    return this._fmt.hourLabel.format(new Date(Date.UTC(2000, 0, 1, hour)));
+  }
+
+  /** Hour of day in the display time zone; after-midnight screenings count as 24+ (same Cineville day). */
+  _hour(iso) {
+    const parts = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: this._fmt.timeZone }).formatToParts(new Date(iso));
     const h = Number(parts.find((p) => p.type === "hour").value);
     const m = Number(parts.find((p) => p.type === "minute").value);
     // Screenings after midnight belong to the previous Cineville day
@@ -237,9 +323,17 @@ class CinevilleCard extends HTMLElement {
     if (day === this._today) return t.today;
     if (day === addDays(this._today, 1)) return t.tomorrow;
     const [y, m, d] = day.split("-").map(Number);
-    return new Intl.DateTimeFormat(this._lang, { weekday: "short", day: "numeric", month: "numeric", timeZone: "UTC" }).format(
-      new Date(Date.UTC(y, m - 1, d))
-    );
+    const date = new Date(Date.UTC(y, m - 1, d));
+    const { language, dateFormat } = this._fmt;
+    if (dateFormat === "DMY" || dateFormat === "MDY" || dateFormat === "YMD") {
+      const weekday = new Intl.DateTimeFormat(language, { weekday: "short", timeZone: "UTC" }).format(date);
+      const dd = String(d).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      const order = { DMY: `${dd}/${mm}`, MDY: `${mm}/${dd}`, YMD: `${mm}-${dd}` }[dateFormat];
+      return `${weekday} ${order}`;
+    }
+    const lang = dateFormat === "system" ? undefined : language;
+    return new Intl.DateTimeFormat(lang, { weekday: "short", day: "numeric", month: "numeric", timeZone: "UTC" }).format(date);
   }
 
   // --- data ----------------------------------------------------------------------------
@@ -276,12 +370,20 @@ class CinevilleCard extends HTMLElement {
     const isToday = program.day === program.today;
     const now = Date.now();
     const from = this._from ?? (isToday ? "now" : "");
+    const watchlistOnly = this._watchlistActive(program);
     return program.showtimes.filter((s) => {
       if (this._venue && s.venue.id !== this._venue) return false;
+      if (watchlistOnly && !s.film.on_watchlist) return false;
+      if (this._config.seen === "hide" && s.film.seen) return false;
       if (from === "now" && !this._config.show_past && new Date(s.start).getTime() < now) return false;
-      if (from && from !== "now" && this._hourInTz(s.start, program.timezone) < Number(from)) return false;
+      if (from && from !== "now" && this._hour(s.start) < Number(from)) return false;
       return true;
     });
+  }
+
+  /** "Only my watchlist" only applies when the integration is logged in. */
+  _watchlistActive(program) {
+    return Boolean(program?.logged_in && this._watchlistOnly);
   }
 
   // --- events --------------------------------------------------------------------------
@@ -298,6 +400,13 @@ class CinevilleCard extends HTMLElement {
       this._view = value;
       try {
         localStorage.setItem(VIEW_STORAGE_KEY, value);
+      } catch {
+        /* storage unavailable */
+      }
+    } else if (action === "watchlist") {
+      this._watchlistOnly = !this._watchlistOnly;
+      try {
+        localStorage.setItem(WATCHLIST_STORAGE_KEY, this._watchlistOnly ? "1" : "0");
       } catch {
         /* storage unavailable */
       }
@@ -328,7 +437,7 @@ class CinevilleCard extends HTMLElement {
     // only keeps its position while the same day/view/filters are shown.
     const dayStrip = this.shadowRoot.querySelector(".days");
     const scrollLeft = dayStrip ? dayStrip.scrollLeft : 0;
-    const contentKey = [this._day, this._view, this._venue, this._from].join("|");
+    const contentKey = [this._day, this._view, this._venue, this._from, this._watchlistOnly].join("|");
     const oldContent = this.shadowRoot.querySelector(".content");
     const scrollTop = oldContent && contentKey === this._contentKey ? oldContent.scrollTop : 0;
     this._contentKey = contentKey;
@@ -342,7 +451,7 @@ class CinevilleCard extends HTMLElement {
       body = `<div class="state">${esc(t.loading)}</div>`;
     } else {
       const shows = this._filtered(program);
-      if (!shows.length) body = `<div class="state">${esc(t.empty)}</div>`;
+      if (!shows.length) body = `<div class="state">${esc(this._watchlistActive(program) ? t.emptyWatchlist : t.empty)}</div>`;
       else body = this._view === "list" ? this._renderList(shows, program) : this._renderFilms(shows, program);
     }
 
@@ -351,6 +460,10 @@ class CinevilleCard extends HTMLElement {
       <ha-card>
         <div class="header">
           <div class="title">${esc(title)}</div>
+          <div class="actions">
+          ${program?.logged_in ? `<button class="toggle ${this._watchlistOnly ? "active" : ""}" data-action="watchlist"
+              aria-pressed="${Boolean(this._watchlistOnly)}" title="${esc(this._watchlistOnly ? t.allFilms : t.watchlistOnly)}">
+              <ha-icon icon="${this._watchlistOnly ? "mdi:bookmark" : "mdi:bookmark-outline"}"></ha-icon></button>` : ""}
           <div class="views" role="group">
             ${["films", "list"]
               .map(
@@ -359,6 +472,7 @@ class CinevilleCard extends HTMLElement {
                    <ha-icon icon="${v === "films" ? "mdi:view-agenda-outline" : "mdi:format-list-bulleted"}"></ha-icon></button>`
               )
               .join("")}
+          </div>
           </div>
         </div>
         <div class="days">${this._renderDays()}</div>
@@ -405,7 +519,7 @@ class CinevilleCard extends HTMLElement {
     const fromOptions = [
       ...(isToday ? [["now", t.fromNow]] : []),
       ["", t.allTimes],
-      ...FROM_HOURS.map((h) => [String(h), `${t.from} ${String(h).padStart(2, "0")}:00`]),
+      ...FROM_HOURS.map((h) => [String(h), `${t.from} ${this._fmtHour(h)}`]),
     ];
     return `<div class="filters">
       <select data-filter="venue" aria-label="${esc(t.allCinemas)}">
@@ -442,8 +556,24 @@ class CinevilleCard extends HTMLElement {
     return out.join("");
   }
 
-  _chip(show, tz) {
-    const time = esc(this._fmtTime(show.start, tz));
+  /** Classes and badges for a film's watchlist / seen state. */
+  _filmState(film) {
+    const t = this._t;
+    const classes = [];
+    const badges = [];
+    if (film.on_watchlist) {
+      classes.push("watchlisted");
+      badges.push(`<span class="badge wl"><ha-icon icon="mdi:bookmark"></ha-icon>${esc(t.watchlist)}</span>`);
+    }
+    if (film.seen && this._config.seen !== "show") {
+      if (this._config.seen === "dim") classes.push("seen");
+      badges.push(`<span class="badge seen-badge">${esc(t.seen)}</span>`);
+    }
+    return { classes: classes.join(" "), badges: badges.join("") };
+  }
+
+  _chip(show) {
+    const time = esc(this._fmtTime(show.start));
     const started = new Date(show.start).getTime() < Date.now();
     const lang = show.language_label ? `<span class="lang">${esc(show.language_label)}</span>` : "";
     // With a single cinema selected, repeating its name on every chip is noise
@@ -476,15 +606,16 @@ class CinevilleCard extends HTMLElement {
           : `<span class="film-title">${esc(film.title)}</span>`;
         const highlight = film.highlight ? `<span class="badge highlight">${esc(highlightLabels[film.highlight] || film.highlight)}</span>` : "";
         const specials = [...new Set(filmShows.map((s) => s.specials).filter(Boolean))];
-        return `<div class="film" data-film="${esc(film.id)}">
+        const state = this._filmState(film);
+        return `<div class="film ${state.classes}" data-film="${esc(film.id)}">
           ${this._poster(film, 60, "poster")}
           <div class="film-body">
-            <div class="film-head">${title}${highlight}</div>
+            <div class="film-head">${title}${state.badges}${highlight}</div>
             <div class="meta">${this._filmMeta(film)}</div>
             <div class="ratings" data-ratings="${esc(film.id)}"></div>
             ${specials.length ? `<div class="specials">${specials.map((s) => `<span class="badge special">${esc(s)}</span>`).join("")}</div>` : ""}
             ${film.short_description ? `<div class="desc">${esc(film.short_description)}</div>` : ""}
-            <div class="chips">${filmShows.map((s) => this._chip(s, program.timezone)).join("")}</div>
+            <div class="chips">${filmShows.map((s) => this._chip(s)).join("")}</div>
           </div>
         </div>`;
       })
@@ -496,15 +627,15 @@ class CinevilleCard extends HTMLElement {
       .map((s) => {
         const started = new Date(s.start).getTime() < Date.now();
         const href = safeUrl(s.ticketing_url);
-        const end = s.end ? `–${esc(this._fmtTime(s.end, program.timezone))}` : "";
+        const end = s.end ? `–${esc(this._fmtTime(s.end))}` : "";
         const row = `
-          <div class="row-time"><span class="time">${esc(this._fmtTime(s.start, program.timezone))}</span><span class="end">${end}</span></div>
+          <div class="row-time"><span class="time">${esc(this._fmtTime(s.start))}</span><span class="end">${end}</span></div>
           ${this._poster(s.film, 36, "thumb")}
           <div class="row-body">
-            <div class="row-title">${esc(s.film.title)}</div>
+            <div class="row-title">${s.film.on_watchlist ? '<ha-icon class="wl-icon" icon="mdi:bookmark"></ha-icon>' : ""}${esc(s.film.title)}</div>
             <div class="row-sub">${esc(s.venue.name)} ${this._badges(s)}</div>
           </div>`;
-        const cls = `row ${started ? "started" : ""}`;
+        const cls = `row ${started ? "started" : ""} ${this._filmState(s.film).classes}`;
         return href
           ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(this._t.tickets)}">${row}</a>`
           : `<div class="${cls}">${row}</div>`;
@@ -566,6 +697,17 @@ const STYLES = `
   .chip .venue { color: var(--secondary-text-color); }
   .chip .lang { font-size: .7rem; font-weight: 500; color: var(--primary-color); }
   .started { opacity: .45; }
+  .actions { display: flex; align-items: center; gap: 6px; }
+  .toggle { width: 36px; height: 36px; border-radius: 18px; display: grid; place-items: center; color: var(--secondary-text-color); }
+  .toggle.active { color: var(--accent-color, #ff9800); background: var(--secondary-background-color); }
+  .toggle ha-icon { --mdc-icon-size: 22px; }
+  .watchlisted { box-shadow: inset 3px 0 0 var(--accent-color, #ff9800); }
+  .seen { opacity: .55; }
+  .seen.started { opacity: .35; }
+  .badge ha-icon { --mdc-icon-size: 12px; margin-right: 2px; vertical-align: -1px; }
+  .badge.wl { background: rgba(255, 152, 0, .16); color: var(--accent-color, #ff9800); }
+  .badge.seen-badge { background: var(--secondary-background-color); color: var(--secondary-text-color); }
+  .wl-icon { --mdc-icon-size: 14px; color: var(--accent-color, #ff9800); margin-right: 4px; vertical-align: -1px; }
   .row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-top: 1px solid var(--divider-color);
          color: inherit; text-decoration: none; }
   .row:first-child { border-top: 0; }

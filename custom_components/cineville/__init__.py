@@ -7,15 +7,16 @@ from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
 from .api import CinevilleClient
-from .const import DOMAIN
-from .coordinator import CinevilleCoordinator
+from .auth import CinevilleAuth, Tokens
+from .const import CONF_TOKENS, CONF_USER_ID, DOMAIN
+from .coordinator import AccountCoordinator, CinevilleCoordinator, CinevilleData
 from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 CARD_URL_PATH = "/cineville_static"
 CARD_FILE = "cineville-card.js"
 
-type CinevilleConfigEntry = ConfigEntry[CinevilleCoordinator]
+type CinevilleConfigEntry = ConfigEntry[CinevilleData]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -54,10 +55,29 @@ async def _async_register_card(hass: HomeAssistant) -> None:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) -> bool:
-    client = CinevilleClient(async_get_clientsession(hass))
-    coordinator = CinevilleCoordinator(hass, entry, client)
-    await coordinator.async_config_entry_first_refresh()
-    entry.runtime_data = coordinator
+    session = async_get_clientsession(hass)
+    auth = None
+    if entry.data.get(CONF_TOKENS) and entry.data.get(CONF_USER_ID):
+
+        @callback
+        def save_tokens(tokens: Tokens) -> None:
+            # Access tokens are renewed hourly; keep the stored copy current
+            hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_TOKENS: tokens.as_dict()})
+
+        auth = CinevilleAuth(session, Tokens.from_dict(entry.data[CONF_TOKENS]), on_tokens_updated=save_tokens)
+
+    client = CinevilleClient(session, auth=auth)
+    program = CinevilleCoordinator(hass, entry, client)
+    await program.async_config_entry_first_refresh()
+
+    account = None
+    if auth is not None:
+        account = AccountCoordinator(hass, entry, client)
+        # Not first_refresh: a failed login must not stop the program from loading.
+        # On an auth error the coordinator starts HA's re-authentication flow instead.
+        await account.async_refresh()
+
+    entry.runtime_data = CinevilleData(program=program, account=account)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

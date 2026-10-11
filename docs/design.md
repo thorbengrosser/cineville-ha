@@ -82,6 +82,11 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    cinema and "from" time filters, posters (imgix-resized), highlight/specials/language badges, ticket links, DE/EN,
    visual editor (`getConfigForm`). Rating badges get a placeholder slot (`.ratings`), filled in milestone 6.
    Preview without HA: `dev/preview.html` with the recorded fixture `dev/fixtures/program-hamburg.json`.
-5. **Login**: config/options flow with the paste-the-code step, account coordinator, watchlist UI, reauth.
+5. ✅ **Login**: options menu (*Cinemas* | *Cineville account*) with the paste-the-code login (accepts the bare code,
+   the `cineville://` URL or the whole `<input>` line) and logout (revokes the token); tokens in `entry.data`, updated on
+   refresh. Separate `AccountCoordinator` (hourly): an auth error starts HA's reauth flow while the program keeps working.
+   `get_program` marks `film.on_watchlist` / `film.seen` and `logged_in`; sensor *Watchlist films today*. Card: watchlist
+   highlight or "only" toggle (remembered per browser), seen films dimmed/hidden, and all times/dates follow the HA
+   profile (language, 12/24 h, local/server time zone, date format).
 6. **Ratings in the integration**: options flow for keys, cache, badges.
 7. HACS packaging, README, screenshots.

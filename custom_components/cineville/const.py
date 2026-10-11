@@ -9,7 +9,13 @@ CONF_CITY_ID = "city_id"
 CONF_CITY_NAME = "city_name"
 CONF_VENUE_IDS = "venue_ids"
 
+# Account data in entry.data (set by the "Cineville account" options step)
+CONF_TOKENS = "tokens"
+CONF_USER_ID = "user_id"
+CONF_ACCOUNT_NAME = "account_name"
+
 UPDATE_INTERVAL = timedelta(minutes=30)
+ACCOUNT_UPDATE_INTERVAL = timedelta(minutes=60)
 # Other days requested by the card are cached this long
 DAY_CACHE_TTL = timedelta(minutes=30)
 # The day picker can look this many days ahead (Cineville publishes about a week)

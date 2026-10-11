@@ -14,30 +14,67 @@
         "data": {
           "venue_ids": "Cinemas"
         }
+      },
+      "reauth_confirm": {
+        "title": "Renew the Cineville login",
+        "description": "The Cineville login has expired.\n\n1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
+        "data": {
+          "code": "Code"
+        }
       }
     },
     "error": {
       "cannot_connect": "Could not reach Cineville. Try again later.",
-      "no_venues_selected": "Select at least one cinema."
+      "no_venues_selected": "Select at least one cinema.",
+      "invalid_code": "That doesn't look like a code.",
+      "login_failed": "The code was not accepted (expired, already used, or from another link). Please use the new link above."
     },
     "abort": {
       "already_configured": "This city is already set up.",
       "cannot_connect": "Could not reach Cineville. Try again later.",
-      "no_cities": "Cineville returned no cities."
+      "no_cities": "Cineville returned no cities.",
+      "reauth_successful": "Cineville login renewed."
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "Cineville",
+        "menu_options": {
+          "venues": "Cinemas",
+          "account": "Cineville account"
+        }
+      },
+      "venues": {
         "title": "Cinemas",
         "description": "Which cinemas in {city} should be included? Keep all selected to automatically include new cinemas.",
         "data": {
           "venue_ids": "Cinemas"
         }
+      },
+      "login": {
+        "title": "Connect your Cineville account",
+        "description": "1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
+        "data": {
+          "code": "Code"
+        },
+        "data_description": {
+          "code": "For your watchlist and seen films."
+        }
+      },
+      "logout": {
+        "title": "Cineville account",
+        "description": "Logged in as **{name}**.",
+        "data": {
+          "log_out": "Log out"
+        }
       }
     },
     "error": {
-      "no_venues_selected": "Select at least one cinema."
+      "no_venues_selected": "Select at least one cinema.",
+      "cannot_connect": "Could not reach Cineville. Try again later.",
+      "invalid_code": "That doesn't look like a code.",
+      "login_failed": "The code was not accepted (expired, already used, or from another link). Please use the new link above."
     },
     "abort": {
       "cannot_connect": "Could not reach Cineville. Try again later."
@@ -84,6 +121,14 @@
             "name": "Tickets"
           }
         }
+      },
+      "watchlist_today": {
+        "name": "Watchlist films today",
+        "state_attributes": {
+          "films": {
+            "name": "Films"
+          }
+        }
       }
     }
   },
@@ -105,6 +150,9 @@
     },
     "date_out_of_range": {
       "message": "The date must be between {first} and {last}."
+    },
+    "auth_expired": {
+      "message": "The Cineville login has expired. Please log in again."
     }
   },
   "services": {
