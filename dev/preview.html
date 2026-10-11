@@ -7,7 +7,7 @@
   <!--
     Renders the real card file with a mock `hass` that answers cineville.get_program from
     dev/fixtures/program-hamburg.json. Serve the repo root (python3 -m http.server) and open /dev/preview.html.
-    Query params: ?theme=dark  &lang=en  &width=380  &view=list
+    Query params: ?theme=dark  &lang=en  &width=380  &view=list  &height=400  &max_height=400
   -->
   <style>
     :root {
@@ -40,7 +40,8 @@
     // Minimal stand-ins for HA's own elements
     customElements.define("ha-card", class extends HTMLElement {
       connectedCallback() {
-        Object.assign(this.style, { display: "block", background: "var(--card-background-color)", borderRadius: "12px",
+        // Like HA's ha-card: no inline display, so the card's own CSS (display: flex) applies
+        Object.assign(this.style, { background: "var(--card-background-color)", borderRadius: "12px",
           border: "1px solid var(--divider-color)", color: "var(--primary-text-color)" });
       }
     });
@@ -65,7 +66,9 @@
 
     await import("../custom_components/cineville/frontend/cineville-card.js");
     const card = document.getElementById("card");
-    card.setConfig({ view: params.get("view") || "films" });
+    // ?height=400 simulates a sections-dashboard grid cell; ?max_height=400 tests the masonry option
+    if (params.get("height")) card.style.height = `${params.get("height")}px`;
+    card.setConfig({ view: params.get("view") || "films", ...(params.get("max_height") ? { max_height: params.get("max_height") } : {}) });
     card.hass = hass;
 
     const link = (label, changes) => {

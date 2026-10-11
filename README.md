@@ -15,6 +15,7 @@ type: custom:cineville-card
 view: films        # films (grouped by film) or list (chronological); switchable on the card
 days: 7            # days in the day picker (1–8)
 show_past: false   # today: also show screenings that have already started
+# max_height: 500px  # for dashboards without a grid; in sections dashboards just resize the card
 # title: Kino heute
 # config_entry_id: ...   # only if you set up several cities
 ```

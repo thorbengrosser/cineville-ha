@@ -6,7 +6,7 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.1.0";
+const CARD_VERSION = "0.1.1";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
 
@@ -35,6 +35,7 @@ const STRINGS = {
       view: "Default view",
       days: "Days in the day picker",
       show_past: "Show screenings that have already started",
+      max_height: "Maximum height (e.g. 500px; only for dashboards without a grid)",
       films: "Grouped by film",
       list: "Chronological list",
     },
@@ -63,6 +64,7 @@ const STRINGS = {
       view: "Standardansicht",
       days: "Tage in der Tagesauswahl",
       show_past: "Bereits begonnene Vorstellungen anzeigen",
+      max_height: "Maximale Höhe (z. B. 500px; nur für Dashboards ohne Raster)",
       films: "Nach Film gruppiert",
       list: "Chronologische Liste",
     },
@@ -140,6 +142,7 @@ class CinevilleCard extends HTMLElement {
         },
         { name: "days", selector: { number: { min: 1, max: 8, mode: "box" } } },
         { name: "show_past", selector: { boolean: {} } },
+        { name: "max_height", selector: { text: {} } },
       ],
       computeLabel: (schema) => t[schema.name] || schema.name,
     };
@@ -321,9 +324,15 @@ class CinevilleCard extends HTMLElement {
     const city = program?.city?.name || Object.values(this._programs)[0]?.city?.name || "";
     const title = this._config.title ?? (city ? `Cineville ${city}` : "Cineville");
 
-    // Keep the day strip's scroll position across re-renders
+    // Keep scroll positions across re-renders (the card re-renders every minute). The program list
+    // only keeps its position while the same day/view/filters are shown.
     const dayStrip = this.shadowRoot.querySelector(".days");
     const scrollLeft = dayStrip ? dayStrip.scrollLeft : 0;
+    const contentKey = [this._day, this._view, this._venue, this._from].join("|");
+    const oldContent = this.shadowRoot.querySelector(".content");
+    const scrollTop = oldContent && contentKey === this._contentKey ? oldContent.scrollTop : 0;
+    this._contentKey = contentKey;
+    this.style.setProperty("--cineville-max-height", this._maxHeight());
 
     let body;
     if (this._errors[this._day]) {
@@ -359,8 +368,19 @@ class CinevilleCard extends HTMLElement {
 
     const strip = this.shadowRoot.querySelector(".days");
     if (strip) strip.scrollLeft = scrollLeft;
+    const content = this.shadowRoot.querySelector(".content");
+    if (content) content.scrollTop = scrollTop;
     this.shadowRoot.querySelector("ha-card").addEventListener("click", (e) => this._onClick(e));
     this.shadowRoot.querySelectorAll("select").forEach((s) => s.addEventListener("change", (e) => this._onChange(e)));
+  }
+
+  /** max_height from the config as a CSS length: 500 -> "500px"; anything unexpected -> "none". */
+  _maxHeight() {
+    const value = this._config.max_height;
+    if (value === undefined || value === null || value === "") return "none";
+    if (typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value).trim())) return `${Number(value)}px`;
+    const text = String(value).trim();
+    return /^\d+(\.\d+)?(px|vh|em|rem)$/.test(text) ? text : "none";
   }
 
   _renderDays() {
@@ -494,8 +514,12 @@ class CinevilleCard extends HTMLElement {
 }
 
 const STYLES = `
-  :host { display: block; }
-  ha-card { overflow: hidden; }
+  /* In a sections dashboard the grid gives the card a height: fill it and scroll the program inside.
+     In masonry dashboards the height is auto unless max_height is set. */
+  :host { display: block; height: 100%; }
+  ha-card { overflow: hidden; height: 100%; max-height: var(--cineville-max-height, none);
+            display: flex; flex-direction: column; box-sizing: border-box; }
+  .header, .days, .filters { flex: none; }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
   .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 8px; gap: 8px; }
   .title { font-size: 1.25rem; font-weight: 500; color: var(--primary-text-color); }
@@ -511,7 +535,7 @@ const STYLES = `
   .filters { display: flex; gap: 8px; padding: 0 16px 8px; flex-wrap: wrap; }
   select { font: inherit; font-size: .9rem; color: var(--primary-text-color); background: var(--secondary-background-color);
            border: 1px solid var(--divider-color); border-radius: 8px; padding: 6px 8px; min-width: 0; max-width: 100%; }
-  .content { padding: 0 8px 12px; }
+  .content { padding: 0 8px 12px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .state { padding: 24px 16px; text-align: center; color: var(--secondary-text-color); }
   .state.error { color: var(--error-color); }
   .retry { margin-top: 12px; padding: 6px 14px; border-radius: 16px; border: 1px solid var(--divider-color); color: var(--primary-text-color); }
