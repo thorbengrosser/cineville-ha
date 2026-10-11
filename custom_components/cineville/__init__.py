@@ -15,8 +15,10 @@ from homeassistant.loader import async_get_integration
 
 from .api import CinevilleClient
 from .auth import CinevilleAuth, Tokens
-from .const import CONF_TOKENS, CONF_USER_ID, DOMAIN
+from .const import CONF_OMDB_KEY, CONF_TMDB_KEY, CONF_TOKENS, CONF_USER_ID, DOMAIN
 from .coordinator import AccountCoordinator, CinevilleCoordinator, CinevilleData
+from .ratings import RatingsClient
+from .ratings_manager import RatingsManager
 from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -77,7 +79,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) ->
         # On an auth error the coordinator starts HA's re-authentication flow instead.
         await account.async_refresh()
 
-    entry.runtime_data = CinevilleData(program=program, account=account)
+    ratings = None
+    if entry.data.get(CONF_TMDB_KEY) and entry.data.get(CONF_OMDB_KEY):
+        ratings = RatingsManager(
+            hass, entry, RatingsClient(session, entry.data[CONF_TMDB_KEY], entry.data[CONF_OMDB_KEY])
+        )
+        await ratings.async_load()
+
+        @callback
+        def update_ratings() -> None:
+            # Look up today's films in the background after each program update
+            if program.data is not None:
+                hass.async_create_task(ratings.async_ensure([s.film for s in program.data.showtimes], timeout=0))
+
+        entry.async_on_unload(program.async_add_listener(update_ratings))
+        update_ratings()
+
+    entry.runtime_data = CinevilleData(program=program, account=account, ratings=ratings)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

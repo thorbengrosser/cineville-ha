@@ -18,6 +18,8 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
     TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 
 from .api import CinevilleClient
@@ -26,12 +28,15 @@ from .const import (
     CONF_ACCOUNT_NAME,
     CONF_CITY_ID,
     CONF_CITY_NAME,
+    CONF_OMDB_KEY,
+    CONF_TMDB_KEY,
     CONF_TOKENS,
     CONF_USER_ID,
     CONF_VENUE_IDS,
     DOMAIN,
 )
 from .exceptions import CinevilleAuthError, CinevilleError
+from .ratings import RatingsAuthError, RatingsClient, RatingsError
 from .models import City, Venue
 
 _LOGGER = logging.getLogger(__name__)
@@ -188,7 +193,7 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
         self._login: LoginRequest | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(step_id="init", menu_options=["venues", "account"])
+        return self.async_show_menu(step_id="init", menu_options=["venues", "account", "ratings"])
 
     async def async_step_venues(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -256,6 +261,37 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
             data_schema=vol.Schema({vol.Required(CONF_LOG_OUT, default=False): bool}),
             description_placeholders={"name": self.config_entry.data.get(CONF_ACCOUNT_NAME) or "?"},
         )
+
+    async def async_step_ratings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """TMDB + OMDb keys for the IMDb / Rotten Tomatoes badges. Both empty = ratings off."""
+        errors: dict[str, str] = {}
+        data = self.config_entry.data
+        if user_input is not None:
+            tmdb = (user_input.get(CONF_TMDB_KEY) or "").strip()
+            omdb = (user_input.get(CONF_OMDB_KEY) or "").strip()
+            if bool(tmdb) != bool(omdb):
+                errors["base"] = "both_keys_needed"
+            elif tmdb:
+                try:
+                    await RatingsClient(async_get_clientsession(self.hass), tmdb, omdb).validate()
+                except RatingsAuthError as err:
+                    errors["base"] = f"invalid_{err.service}_key"
+                except RatingsError:
+                    errors["base"] = "cannot_connect"
+            if not errors:
+                new = {k: v for k, v in data.items() if k not in (CONF_TMDB_KEY, CONF_OMDB_KEY)}
+                if tmdb:
+                    new |= {CONF_TMDB_KEY: tmdb, CONF_OMDB_KEY: omdb}
+                self.hass.config_entries.async_update_entry(self.config_entry, data=new)
+                self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+                return self.async_create_entry(data=dict(self.config_entry.options))
+
+        password = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
+        schema = vol.Schema({
+            vol.Optional(CONF_TMDB_KEY, description={"suggested_value": data.get(CONF_TMDB_KEY)}): password,
+            vol.Optional(CONF_OMDB_KEY, description={"suggested_value": data.get(CONF_OMDB_KEY)}): password,
+        })
+        return self.async_show_form(step_id="ratings", data_schema=schema, errors=errors)
 
     def _save_account(self, updates: dict[str, Any] | None) -> None:
         """Store (or with None: remove) the account and reload, since the options themselves don't change."""

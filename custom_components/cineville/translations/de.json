@@ -42,7 +42,8 @@
         "title": "Cineville",
         "menu_options": {
           "venues": "Kinos",
-          "account": "Cineville-Konto"
+          "account": "Cineville-Konto",
+          "ratings": "Bewertungen"
         }
       },
       "venues": {
@@ -68,13 +69,24 @@
         "data": {
           "log_out": "Abmelden"
         }
+      },
+      "ratings": {
+        "title": "IMDb- und Rotten-Tomatoes-Bewertungen",
+        "description": "Für die Bewertungen braucht es zwei kostenlose API-Schlüssel: [TMDB](https://www.themoviedb.org/settings/api) findet den Film (Cineville kennt nur deutsche Titel), [OMDb](https://www.omdbapi.com/apikey.aspx) liefert die Bewertungen. Beide Felder leeren schaltet die Bewertungen ab.",
+        "data": {
+          "tmdb_api_key": "TMDB-API-Schlüssel (v3)",
+          "omdb_api_key": "OMDb-API-Schlüssel"
+        }
       }
     },
     "error": {
       "no_venues_selected": "Bitte mindestens ein Kino auswählen.",
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
       "invalid_code": "Das sieht nicht nach einem Code aus.",
-      "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden."
+      "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden.",
+      "both_keys_needed": "Bitte beide Schlüssel eintragen (oder beide leeren).",
+      "invalid_tmdb_key": "TMDB hat den Schlüssel abgelehnt.",
+      "invalid_omdb_key": "OMDb hat den Schlüssel abgelehnt."
     },
     "abort": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."

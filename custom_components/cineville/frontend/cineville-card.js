@@ -6,7 +6,7 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.2.0";
+const CARD_VERSION = "0.3.0";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
 const WATCHLIST_STORAGE_KEY = "cineville-card-watchlist-only";
@@ -34,6 +34,7 @@ const STRINGS = {
     watchlistOnly: "Only films on my watchlist",
     allFilms: "All films",
     seen: "Seen",
+    votes: "votes",
     emptyWatchlist: "None of your watchlist films is showing in this selection.",
     editor: {
       title: "Title",
@@ -75,6 +76,7 @@ const STRINGS = {
     watchlistOnly: "Nur Filme von meiner Merkliste",
     allFilms: "Alle Filme",
     seen: "Gesehen",
+    votes: "Stimmen",
     emptyWatchlist: "Kein Film von deiner Merkliste läuft in dieser Auswahl.",
     editor: {
       title: "Titel",
@@ -556,6 +558,30 @@ class CinevilleCard extends HTMLElement {
     return out.join("");
   }
 
+  /** IMDb / Rotten Tomatoes badges (from the integration's ratings, if configured). */
+  _ratingBadges(film, compact = false) {
+    const r = film.ratings;
+    if (!r) return "";
+    const { language } = this._fmt;
+    const out = [];
+    if (r.imdb != null) {
+      const score = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(r.imdb);
+      const votes = r.imdb_votes != null ? ` · ${new Intl.NumberFormat(language).format(r.imdb_votes)} ${this._t.votes}` : "";
+      const inner = `<b>IMDb</b> ${esc(score)}`;
+      const href = r.imdb_id && /^tt\d+$/.test(r.imdb_id) ? `https://www.imdb.com/title/${r.imdb_id}/` : "";
+      out.push(
+        href
+          ? `<a class="rating imdb" href="${href}" target="_blank" rel="noopener noreferrer" title="IMDb${esc(votes)}">${inner}</a>`
+          : `<span class="rating imdb" title="IMDb${esc(votes)}">${inner}</span>`
+      );
+    }
+    if (r.rotten_tomatoes != null && !(compact && out.length)) {
+      const fresh = r.rotten_tomatoes >= 60;
+      out.push(`<span class="rating rt ${fresh ? "fresh" : "rotten"}" title="Rotten Tomatoes">${fresh ? "🍅" : "🟢"} ${esc(r.rotten_tomatoes)}%</span>`);
+    }
+    return out.join("");
+  }
+
   /** Classes and badges for a film's watchlist / seen state. */
   _filmState(film) {
     const t = this._t;
@@ -612,7 +638,7 @@ class CinevilleCard extends HTMLElement {
           <div class="film-body">
             <div class="film-head">${title}${state.badges}${highlight}</div>
             <div class="meta">${this._filmMeta(film)}</div>
-            <div class="ratings" data-ratings="${esc(film.id)}"></div>
+            <div class="ratings">${this._ratingBadges(film)}</div>
             ${specials.length ? `<div class="specials">${specials.map((s) => `<span class="badge special">${esc(s)}</span>`).join("")}</div>` : ""}
             ${film.short_description ? `<div class="desc">${esc(film.short_description)}</div>` : ""}
             <div class="chips">${filmShows.map((s) => this._chip(s)).join("")}</div>
@@ -633,7 +659,7 @@ class CinevilleCard extends HTMLElement {
           ${this._poster(s.film, 36, "thumb")}
           <div class="row-body">
             <div class="row-title">${s.film.on_watchlist ? '<ha-icon class="wl-icon" icon="mdi:bookmark"></ha-icon>' : ""}${esc(s.film.title)}</div>
-            <div class="row-sub">${esc(s.venue.name)} ${this._badges(s)}</div>
+            <div class="row-sub">${esc(s.venue.name)} ${this._badges(s)}${this._ratingBadges(s.film, true)}</div>
           </div>`;
         const cls = `row ${started ? "started" : ""} ${this._filmState(s.film).classes}`;
         return href
@@ -681,7 +707,14 @@ const STYLES = `
   a.film-title:hover { text-decoration: underline; }
   .meta { font-size: .8rem; color: var(--secondary-text-color); margin-top: 2px; }
   .ratings:empty { display: none; }
-  .ratings { display: flex; gap: 6px; margin-top: 4px; }
+  .ratings { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .rating { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; padding: 1px 6px; border-radius: 4px;
+            text-decoration: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .rating.imdb { background: #f5c518; color: #000; }
+  .rating.imdb b { font-weight: 800; letter-spacing: -.02em; }
+  a.rating.imdb:hover { filter: brightness(.95); }
+  .rating.rt { background: var(--secondary-background-color); color: var(--primary-text-color); }
+  .rating.rt.fresh { color: #fa320a; }
   .desc { font-size: .85rem; color: var(--secondary-text-color); margin-top: 4px; display: -webkit-box;
           -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .specials { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }

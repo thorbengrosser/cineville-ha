@@ -88,5 +88,10 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    `get_program` marks `film.on_watchlist` / `film.seen` and `logged_in`; sensor *Watchlist films today*. Card: watchlist
    highlight or "only" toggle (remembered per browser), seen films dimmed/hidden, and all times/dates follow the HA
    profile (language, 12/24 h, local/server time zone, date format).
-6. **Ratings in the integration**: options flow for keys, cache, badges.
+6. ✅ **Ratings in the integration**: options step *Ratings* (TMDB + OMDb keys, validated, stored in `entry.data`);
+   `ratings.py` (matching rules from the spike, no HA imports) and `ratings_manager.py` (HA `Store` cache: complete
+   7 days, incomplete 1 day, no match 3 days; 4 parallel lookups, max 800/day, disabled after a rejected key).
+   Today's films are looked up after each program update; `get_program` waits up to 8 s for missing ones and returns
+   `film.ratings` (`imdb` is null below 100 votes). Card: IMDb badge (links to IMDb) and Rotten Tomatoes badge, numbers in
+   the HA locale. Live check on the preview fixture: 37/41 films matched, 14 IMDb ratings shown (6 hidden for < 100 votes), 17 RT.
 7. HACS packaging, README, screenshots.

@@ -13,6 +13,11 @@ CONF_VENUE_IDS = "venue_ids"
 CONF_TOKENS = "tokens"
 CONF_USER_ID = "user_id"
 CONF_ACCOUNT_NAME = "account_name"
+# Ratings API keys in entry.data (set by the "Ratings" options step)
+CONF_TMDB_KEY = "tmdb_api_key"
+CONF_OMDB_KEY = "omdb_api_key"
+# How long get_program waits for missing ratings before answering (the rest arrive on the next call)
+RATINGS_WAIT_SECONDS = 8
 
 UPDATE_INTERVAL = timedelta(minutes=30)
 ACCOUNT_UPDATE_INTERVAL = timedelta(minutes=60)

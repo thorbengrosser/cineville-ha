@@ -20,6 +20,7 @@ from .const import (
     DEFAULT_TIMEZONE,
     DOMAIN,
     MAX_DAYS_AHEAD,
+    RATINGS_WAIT_SECONDS,
     SERVICE_GET_PROGRAM,
 )
 
@@ -60,10 +61,14 @@ def async_setup_services(hass: HomeAssistant) -> None:
             )
         program = await coordinator.async_get_program(day)
         entry = coordinator.config_entry
+        if data.ratings is not None:
+            await data.ratings.async_ensure([s.film for s in program.showtimes], timeout=RATINGS_WAIT_SECONDS)
         showtimes = []
         for show in program.showtimes:
             item = show.as_dict()
             item["film"]["on_watchlist"], item["film"]["seen"] = data.flags(show.film.id)
+            rating = data.ratings.get(show.film.id) if data.ratings else None
+            item["film"]["ratings"] = rating.as_dict() if rating else None
             showtimes.append(item)
         return {
             "config_entry_id": entry.entry_id,

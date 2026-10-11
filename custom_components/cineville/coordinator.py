@@ -28,6 +28,7 @@ from .const import (
 )
 from .exceptions import CinevilleAuthError, CinevilleError
 from .models import Showtime, cineville_day, day_window
+from .ratings_manager import RatingsManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -157,6 +158,7 @@ class CinevilleData:
 
     program: CinevilleCoordinator
     account: AccountCoordinator | None = None
+    ratings: RatingsManager | None = None
 
     def flags(self, production_id: str) -> tuple[bool, bool]:
         """(on_watchlist, seen) for a film; both False when not logged in or not loaded yet."""

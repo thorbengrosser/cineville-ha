@@ -3,7 +3,15 @@
 Home Assistant integration for [Cineville](https://cineville.de): today's showtimes in your cinemas,
 plus your watchlist and the films you've seen.
 
-Work in progress (rating badges are not there yet).
+Work in progress.
+
+## IMDb and Rotten Tomatoes ratings (optional)
+
+Under *Configure → Ratings*, enter two free API keys: [TMDB](https://www.themoviedb.org/settings/api) (to find the
+film; Cineville only has German titles) and [OMDb](https://www.omdbapi.com/apikey.aspx) (for the ratings). The card
+then shows IMDb (hidden below 100 votes) and Rotten Tomatoes badges. Ratings are cached: complete ones are re-checked
+weekly, incomplete ones daily, and the integration stays well within OMDb's free 1,000 requests per day.
+New German releases often have no IMDb or Rotten Tomatoes rating yet; those films simply show no badge.
 
 ## Watchlist and seen films (optional)
 
