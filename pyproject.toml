@@ -1,0 +1,11 @@
+[project]
+name = "cineville-ha"
+version = "0.0.0"
+description = "Home Assistant integration for Cineville"
+requires-python = ">=3.13"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -17,3 +17,4 @@ __pycache__/
 
 # Local API keys (TMDB / OMDb) for spikes and tests
 .env
+.pytest_cache/

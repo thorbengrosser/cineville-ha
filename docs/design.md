@@ -67,8 +67,10 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
 
 ## Milestones
 
-1. **API client** (`custom_components/cineville/api.py`, plain async `aiohttp`): showtimes for a day, cities, venues,
-   tenant config, account endpoints, token exchange/refresh. Unit tests against the recorded samples.
+1. ✅ **API client** (`custom_components/cineville/`: `api.py`, `auth.py`, `models.py`; plain async `aiohttp`, no HA imports):
+   showtimes for a day, cities, venues, tenant config, account endpoints, token exchange/refresh/revoke.
+   50 tests against a local fake server (`tests/`, run with `.venv/bin/python -m pytest`). Checked against the live
+   API on 2026-10-11. Note: the tenant config says `Europe/Amsterdam` for DE; we default to `Europe/Berlin` (same rules).
 2. **Ratings spike**: test TMDB/OMDb matching on a week of Hamburg films. Measure the hit rate, check the
    German-title and year edge cases. Decide on the matching rules before building on them.
 3. **Integration skeleton**: config flow (city → cinemas), coordinator, sensors, `get_program` service.
