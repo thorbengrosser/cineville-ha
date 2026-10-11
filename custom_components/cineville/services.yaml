@@ -1,0 +1,9 @@
+get_program:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: cineville
+    date:
+      selector:
+        date:

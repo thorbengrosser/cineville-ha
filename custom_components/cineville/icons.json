@@ -1,0 +1,11 @@
+{
+  "entity": {
+    "sensor": {
+      "upcoming_screenings": { "default": "mdi:filmstrip" },
+      "next_screening": { "default": "mdi:movie-open-play" }
+    }
+  },
+  "services": {
+    "get_program": { "service": "mdi:movie-search" }
+  }
+}

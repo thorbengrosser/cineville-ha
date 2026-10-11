@@ -1,6 +1,23 @@
 """Constants for the Cineville integration."""
 
+from datetime import timedelta
+
 DOMAIN = "cineville"
+
+# Config entry keys. venue_ids == [] means "the whole city" (new cinemas are picked up automatically).
+CONF_CITY_ID = "city_id"
+CONF_CITY_NAME = "city_name"
+CONF_VENUE_IDS = "venue_ids"
+
+UPDATE_INTERVAL = timedelta(minutes=30)
+# Other days requested by the card are cached this long
+DAY_CACHE_TTL = timedelta(minutes=30)
+# The day picker can look this many days ahead (Cineville publishes about a week)
+MAX_DAYS_AHEAD = 7
+
+SERVICE_GET_PROGRAM = "get_program"
+ATTR_CONFIG_ENTRY_ID = "config_entry_id"
+ATTR_DATE = "date"
 
 API_URL = "https://api.cineville.de"
 WEBSITE_URL = "https://cineville.de"

@@ -1,0 +1,126 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Stadt wählen",
+        "description": "Cineville zeigt die Vorstellungen der teilnehmenden Kinos dieser Stadt.",
+        "data": {
+          "city_id": "Stadt"
+        }
+      },
+      "venues": {
+        "title": "Kinos wählen",
+        "description": "Welche Kinos in {city} sollen dabei sein? Wenn alle ausgewählt bleiben, kommen Kinos, die später bei Cineville mitmachen, automatisch dazu.",
+        "data": {
+          "venue_ids": "Kinos"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
+      "no_venues_selected": "Bitte mindestens ein Kino auswählen."
+    },
+    "abort": {
+      "already_configured": "Diese Stadt ist bereits eingerichtet.",
+      "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
+      "no_cities": "Cineville hat keine Städte geliefert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Kinos",
+        "description": "Welche Kinos in {city} sollen dabei sein? Wenn alle ausgewählt bleiben, kommen neue Kinos automatisch dazu.",
+        "data": {
+          "venue_ids": "Kinos"
+        }
+      }
+    },
+    "error": {
+      "no_venues_selected": "Bitte mindestens ein Kino auswählen."
+    },
+    "abort": {
+      "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "upcoming_screenings": {
+        "name": "Kommende Vorstellungen heute",
+        "state_attributes": {
+          "day": {
+            "name": "Tag"
+          },
+          "films": {
+            "name": "Filme"
+          },
+          "screenings_total": {
+            "name": "Vorstellungen heute"
+          }
+        }
+      },
+      "next_screening": {
+        "name": "Nächste Vorstellung",
+        "state_attributes": {
+          "film": {
+            "name": "Film"
+          },
+          "venue": {
+            "name": "Kino"
+          },
+          "language": {
+            "name": "Sprache"
+          },
+          "specials": {
+            "name": "Specials"
+          },
+          "end": {
+            "name": "Ende"
+          },
+          "poster": {
+            "name": "Plakat"
+          },
+          "ticketing_url": {
+            "name": "Tickets"
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "update_failed": {
+      "message": "Das Cineville-Programm konnte nicht aktualisiert werden: {error}"
+    },
+    "fetch_failed": {
+      "message": "Das Cineville-Programm konnte nicht geladen werden: {error}"
+    },
+    "entry_not_found": {
+      "message": "Kein geladener Cineville-Eintrag mit dieser ID."
+    },
+    "entry_required": {
+      "message": "Es sind mehrere Cineville-Städte eingerichtet. Bitte config_entry_id angeben."
+    },
+    "not_loaded": {
+      "message": "Cineville ist nicht eingerichtet oder nicht geladen."
+    },
+    "date_out_of_range": {
+      "message": "Das Datum muss zwischen {first} und {last} liegen."
+    }
+  },
+  "services": {
+    "get_program": {
+      "name": "Programm abrufen",
+      "description": "Liefert alle Vorstellungen eines Tages (04:00–04:00) in den gewählten Kinos.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Stadt",
+          "description": "Welcher Cineville-Eintrag. Nur nötig, wenn mehrere Städte eingerichtet sind."
+        },
+        "date": {
+          "name": "Datum",
+          "description": "Der gewünschte Tag. Standard: heute; bis zu 7 Tage im Voraus."
+        }
+      }
+    }
+  }
+}

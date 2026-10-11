@@ -48,7 +48,8 @@ Response: `{..., _embedded: {productions: Production[]}}`.
 | ✅ `GET` | `/venues/{id}/collections` | The city collection the venue belongs to |
 | ✅ `GET` | `/venues/{id}/assets` | |
 
-There is no `/venues/search`; the website uses `GET /venues`.
+There is no `/venues/search`; the website uses `GET /venues`. Without a filter, `GET /venues?page[limit]=1000` lists every
+venue (77 as of 2026-10, 74 visible). See [data-model.md](data-model.md#all-venues-2026-10-11) for the full list by city.
 
 ### Collections: tagging and grouping
 
@@ -65,7 +66,7 @@ Collection groups and IDs that matter in practice:
 
 | Group | IDs (2026-10) |
 |---|---|
-| `cities` | `hamburg`, `Berlin`, `koeln`, `bremen`, `duesseldorf`, `freiburg`, `bonn`, `fuerth`, `nuernberg`, `wuppertal`, `leverkusen`, `wuerzburg`, `potsdam`, `braunschweig`, `aachen`, `dresden`, `erlangen`, … (also junk like `k`, `nu`, `Nürnberg`, `neue-kinos`). ⚠️ IDs are **case-sensitive** and inconsistent (`Berlin` is capitalised). |
+| `cities` | 21 IDs, but only 15 have venues: `aachen`, `Berlin`, `bonn`, `braunschweig`, `bremen`, `duesseldorf`, `freiburg`, `fuerth`, `hamburg`, `koeln`, `leverkusen`, `nuernberg`, `potsdam`, `wuerzburg`, `wuppertal`. These are the same 15 as the website's city filter. Empty or duplicate IDs: `dresden`, `erlangen`, `k`, `nu`, `neue-kinos`, and `Nürnberg` (its venues are a subset of `nuernberg`). ⚠️ IDs are **case-sensitive** and inconsistent (`Berlin` is capitalised). |
 | `common` | `now-screening`, `coming-soon` (applied to productions) |
 | `subtitles` | `OmeU`, `OmU`, `OV`, `english-subs` |
 | `specials` | `introduction`, `diverse`, `cineville-trailer`, `open-air`, `film-der-woche`, `filmderwoche-neu` |

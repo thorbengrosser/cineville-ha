@@ -1,0 +1,12 @@
+{
+  "domain": "cineville",
+  "name": "Cineville",
+  "codeowners": ["@thorbengrosser"],
+  "config_flow": true,
+  "documentation": "https://github.com/thorbengrosser/cineville-ha",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/thorbengrosser/cineville-ha/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

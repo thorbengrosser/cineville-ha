@@ -73,7 +73,10 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    API on 2026-10-11. Note: the tenant config says `Europe/Amsterdam` for DE; we default to `Europe/Berlin` (same rules).
 2. **Ratings spike**: test TMDB/OMDb matching on a week of Hamburg films. Measure the hit rate, check the
    German-title and year edge cases. Decide on the matching rules before building on them.
-3. **Integration skeleton**: config flow (city → cinemas), coordinator, sensors, `get_program` service.
+3. ✅ **Integration skeleton**: config flow (city → cinemas, options flow to change cinemas), coordinator
+   (today every 30 min; other days on demand, cached 30 min), sensors (`Upcoming screenings today`, `Next screening`,
+   re-evaluated every minute), `cineville.get_program` service (`date` up to 7 days ahead, returns `Showtime.as_dict()`
+   list), EN/DE translations, `hacs.json`. 16 HA tests via `pytest-homeassistant-custom-component` (HA 2026.10.1).
 4. **Card**: grouped/list views, day picker, filters, posters, rating badges.
 5. **Login**: config/options flow with the paste-the-code step, account coordinator, watchlist UI, reauth.
 6. **Ratings in the integration**: options flow for keys, cache, badges.

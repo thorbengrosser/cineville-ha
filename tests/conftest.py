@@ -84,7 +84,8 @@ class FakeApi:
 
 
 @pytest.fixture
-async def fake_api():
+async def fake_api(socket_enabled):
+    """socket_enabled: the HA test harness blocks sockets; the fake server only listens on 127.0.0.1."""
     api = FakeApi()
     app = web.Application()
     app.router.add_route("*", "/{tail:.*}", api.dispatch)
@@ -96,6 +97,12 @@ async def fake_api():
 
 
 @pytest.fixture
-async def session():
+async def session(socket_enabled):
     async with aiohttp.ClientSession() as s:
         yield s
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations):
+    """Let Home Assistant load custom_components/cineville in every test."""
+    yield
