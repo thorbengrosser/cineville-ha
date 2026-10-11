@@ -77,7 +77,11 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    (today every 30 min; other days on demand, cached 30 min), sensors (`Upcoming screenings today`, `Next screening`,
    re-evaluated every minute), `cineville.get_program` service (`date` up to 7 days ahead, returns `Showtime.as_dict()`
    list), EN/DE translations, `hacs.json`. 16 HA tests via `pytest-homeassistant-custom-component` (HA 2026.10.1).
-4. **Card**: grouped/list views, day picker, filters, posters, rating badges.
+4. ✅ **Card** (`custom_components/cineville/frontend/cineville-card.js`, dependency-free web component, served by the
+   integration and auto-loaded via `add_extra_js_url`): grouped/list views (choice remembered per browser), day picker,
+   cinema and "from" time filters, posters (imgix-resized), highlight/specials/language badges, ticket links, DE/EN,
+   visual editor (`getConfigForm`). Rating badges get a placeholder slot (`.ratings`), filled in milestone 6.
+   Preview without HA: `dev/preview.html` with the recorded fixture `dev/fixtures/program-hamburg.json`.
 5. **Login**: config/options flow with the paste-the-code step, account coordinator, watchlist UI, reauth.
 6. **Ratings in the integration**: options flow for keys, cache, badges.
 7. HACS packaging, README, screenshots.

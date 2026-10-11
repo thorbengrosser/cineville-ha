@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cineville card preview</title>
+  <!--
+    Renders the real card file with a mock `hass` that answers cineville.get_program from
+    dev/fixtures/program-hamburg.json. Serve the repo root (python3 -m http.server) and open /dev/preview.html.
+    Query params: ?theme=dark  &lang=en  &width=380  &view=list
+  -->
+  <style>
+    :root {
+      --primary-color: #03a9f4; --rgb-primary-color: 3, 169, 244; --accent-color: #ff9800;
+      --primary-text-color: #212121; --secondary-text-color: #727272; --text-primary-color: #fff;
+      --card-background-color: #fff; --secondary-background-color: #f0f0f0; --divider-color: rgba(0,0,0,.12);
+      --error-color: #db4437; --primary-background-color: #fafafa;
+      font-family: Roboto, "Noto Sans", system-ui, sans-serif;
+    }
+    :root.dark {
+      --primary-text-color: #e1e1e1; --secondary-text-color: #9b9b9b; --card-background-color: #1c1c1c;
+      --secondary-background-color: #282828; --divider-color: rgba(225,225,225,.12); --primary-background-color: #111;
+    }
+    body { margin: 0; padding: 16px; background: var(--primary-background-color); }
+    .wrap { max-width: var(--w, 520px); margin: 0 auto; }
+    .controls { font: 13px system-ui; color: var(--secondary-text-color); margin-bottom: 12px; }
+    .controls a { color: var(--primary-color); margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="controls" id="controls"></div>
+    <cineville-card id="card"></cineville-card>
+  </div>
+  <script type="module">
+    const params = new URLSearchParams(location.search);
+    if (params.get("theme") === "dark") document.documentElement.classList.add("dark");
+    if (params.get("width")) document.documentElement.style.setProperty("--w", `${params.get("width")}px`);
+
+    // Minimal stand-ins for HA's own elements
+    customElements.define("ha-card", class extends HTMLElement {
+      connectedCallback() {
+        Object.assign(this.style, { display: "block", background: "var(--card-background-color)", borderRadius: "12px",
+          border: "1px solid var(--divider-color)", color: "var(--primary-text-color)" });
+      }
+    });
+    const GLYPHS = { "mdi:view-agenda-outline": "▤", "mdi:format-list-bulleted": "☰", "mdi:filmstrip": "🎞" };
+    customElements.define("ha-icon", class extends HTMLElement {
+      connectedCallback() { this.textContent = GLYPHS[this.getAttribute("icon")] || "•"; }
+    });
+
+    const fixture = await (await fetch("fixtures/program-hamburg.json")).json();
+    const today = Object.keys(fixture)[0];
+    const hass = {
+      locale: { language: params.get("lang") || "de" },
+      connection: {
+        async sendMessagePromise(msg) {
+          await new Promise((r) => setTimeout(r, 300)); // simulate latency
+          const day = msg.service_data.date || today;
+          if (!fixture[day]) throw new Error(`No fixture for ${day} (preview only has ${Object.keys(fixture).join(", ")})`);
+          return { response: fixture[day] };
+        },
+      },
+    };
+
+    await import("../custom_components/cineville/frontend/cineville-card.js");
+    const card = document.getElementById("card");
+    card.setConfig({ view: params.get("view") || "films" });
+    card.hass = hass;
+
+    const link = (label, changes) => {
+      const p = new URLSearchParams(location.search);
+      Object.entries(changes).forEach(([k, v]) => (v === null ? p.delete(k) : p.set(k, v)));
+      return `<a href="?${p}">${label}</a>`;
+    };
+    document.getElementById("controls").innerHTML = `Preview (fixture ${today}): ` +
+      link("light", { theme: null }) + link("dark", { theme: "dark" }) +
+      link("de", { lang: "de" }) + link("en", { lang: "en" }) +
+      link("phone 380px", { width: 380 }) + link("wide", { width: null });
+  </script>
+</body>
+</html>

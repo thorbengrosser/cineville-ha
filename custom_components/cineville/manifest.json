@@ -1,7 +1,13 @@
 {
   "domain": "cineville",
   "name": "Cineville",
-  "codeowners": ["@thorbengrosser"],
+  "after_dependencies": [
+    "frontend",
+    "http"
+  ],
+  "codeowners": [
+    "@thorbengrosser"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/thorbengrosser/cineville-ha",
   "integration_type": "service",
