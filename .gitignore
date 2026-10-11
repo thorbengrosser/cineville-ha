@@ -14,3 +14,6 @@ __pycache__/
 .vscode/
 .idea/
 .DS_Store
+
+# Local API keys (TMDB / OMDb) for spikes and tests
+.env
