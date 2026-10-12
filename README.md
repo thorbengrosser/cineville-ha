@@ -27,7 +27,8 @@ Cineville currently covers 15 German cities (Berlin, Hamburg, Köln, …).
 2. Search for **Cineville** in HACS, download it and restart Home Assistant.
 3. *Settings → Devices & services → Add integration → Cineville*: pick your city and the cinemas you care about.
    If you keep all cinemas selected, cinemas that join Cineville later are included automatically.
-4. On a dashboard: *Add card → Cineville*. The card comes with the integration; you don't need to add a resource.
+4. On a dashboard: *Add card → Cineville*. The card comes with the integration, which registers it as a dashboard
+   resource by itself (if your resources are managed in YAML, it loads the card another way).
 
 Requires Home Assistant 2025.8 or newer.
 
@@ -93,7 +94,9 @@ Returns `{day, today, city, timezone, logged_in, showtimes: [...]}`. Each showti
 
 ## Troubleshooting
 
-- **The card doesn't appear in the card picker**: reload the browser once after installing or updating.
+- **The card doesn't appear in the card picker, or shows "Configuration error"**: reload the browser once after
+  installing or updating. If it persists, check that *Settings → Dashboards → ⋮ → Resources* lists
+  `/cineville_static/cineville-card.js` (the integration adds it on startup).
 - **No program / "could not load"**: check *Settings → System → Logs* for `cineville`. If Cineville changed their
   API, the weekly API check in this repository's GitHub Actions will usually have spotted it too.
 - **Login code not accepted**: the emailed code is valid for a few minutes; just try again. With the manual fallback,

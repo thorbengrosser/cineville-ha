@@ -111,3 +111,8 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    (see api/authentication.md). Re-authentication works the same way with the stored email prefilled and falls back
    to the manual paste method automatically if the pages changed; *Add an account manually* stays as a fallback.
    Accounts now also store the email address (for prefilling).
+10. ✅ **Card loading** (0.5.0-alpha.3): the card is registered as a Lovelace *dashboard resource* (storage mode;
+   created/updated with the version in the URL, duplicates removed, deleted with the last entry) instead of via
+   `add_extra_js_url`. Dashboards wait for resources before drawing cards; the extra-JS route loaded in parallel, so on
+   a fresh page load the card sometimes showed "Configuration error" until a reload. YAML-mode resources fall back to
+   `add_extra_js_url`.

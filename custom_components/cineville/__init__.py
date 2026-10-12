@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -42,11 +43,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def _async_register_card(hass: HomeAssistant) -> None:
-    """Serve frontend/cineville-card.js and add it to every dashboard (no manual resource needed)."""
+    """Serve frontend/cineville-card.js and make every dashboard load it (no manual resource needed).
+
+    The card is registered as a dashboard resource: dashboards wait for resources before drawing cards.
+    (add_extra_js_url loads in parallel with the dashboard, so on a fresh page load the card's code could
+    arrive too late and the card showed "Configuration error" until a reload.)
+    """
     if hass.http is None or "frontend" not in hass.config.components:
         _LOGGER.debug("Frontend not loaded; not registering the Cineville card")
         return
-    from homeassistant.components.frontend import add_extra_js_url  # noqa: PLC0415
     from homeassistant.components.http import StaticPathConfig  # noqa: PLC0415
 
     integration = await async_get_integration(hass, DOMAIN)
@@ -54,7 +59,58 @@ async def _async_register_card(hass: HomeAssistant) -> None:
         [StaticPathConfig(CARD_URL_PATH, str(Path(__file__).parent / "frontend"), cache_headers=False)]
     )
     # Version in the URL so browsers pick up a new card after an update
-    add_extra_js_url(hass, f"{CARD_URL_PATH}/{CARD_FILE}?v={integration.version}")
+    url = f"{CARD_URL_PATH}/{CARD_FILE}?v={integration.version}"
+    if not await _async_ensure_resource(hass, url):
+        # Resources managed in YAML (or no lovelace): fall back to loading it alongside the frontend
+        from homeassistant.components.frontend import add_extra_js_url  # noqa: PLC0415
+
+        add_extra_js_url(hass, url)
+
+
+def _resource_collection(hass: HomeAssistant) -> Any | None:
+    """The storage-mode dashboard resource collection, or None (YAML mode / lovelace not loaded)."""
+    data = hass.data.get("lovelace")
+    if data is None:
+        return None
+    mode = getattr(data, "resource_mode", None) or getattr(data, "mode", None)
+    resources = getattr(data, "resources", None)
+    if mode != "storage" or resources is None or not hasattr(resources, "async_create_item"):
+        return None
+    return resources
+
+
+def _is_card_resource(item: dict[str, Any]) -> bool:
+    return str(item.get("url", "")).split("?")[0] == f"{CARD_URL_PATH}/{CARD_FILE}"
+
+
+async def _async_ensure_resource(hass: HomeAssistant, url: str) -> bool:
+    """Create or update the card's dashboard resource. False if resources can't be managed here."""
+    resources = _resource_collection(hass)
+    if resources is None:
+        return False
+    await resources.async_get_info()  # loads the collection from storage if needed
+    existing = [item for item in resources.async_items() if _is_card_resource(item)]
+    if not existing:
+        await resources.async_create_item({"res_type": "module", "url": url})
+        _LOGGER.debug("Registered dashboard resource %s", url)
+        return True
+    first, *duplicates = existing
+    if first.get("url") != url or first.get("type") != "module":
+        await resources.async_update_item(first["id"], {"res_type": "module", "url": url})
+    for item in duplicates:
+        await resources.async_delete_item(item["id"])
+    return True
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) -> None:
+    """Remove the card's dashboard resource when the last Cineville entry is deleted."""
+    if any(e.entry_id != entry.entry_id for e in hass.config_entries.async_entries(DOMAIN)):
+        return
+    if (resources := _resource_collection(hass)) is None:
+        return
+    await resources.async_get_info()
+    for item in [i for i in resources.async_items() if _is_card_resource(i)]:
+        await resources.async_delete_item(item["id"])
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) -> bool:
