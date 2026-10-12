@@ -6,7 +6,7 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.5.0-alpha.1";
+const CARD_VERSION = "0.5.0-alpha.2";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
 // Watchlist filter: "" (all films), "any", "all" (everyone's) or an account ID. The old boolean key is migrated.
@@ -612,7 +612,11 @@ class CinevilleCard extends HTMLElement {
     return out.join("");
   }
 
-  /** IMDb / Rotten Tomatoes badges (from the integration's ratings, if configured). */
+  /**
+   * IMDb / Rotten Tomatoes badges (from the integration's ratings, if configured).
+   * compact: for list rows. Those rows are links themselves, so the IMDb badge must not be a link
+   * (a link inside a link is invalid HTML and makes the browser break the row apart).
+   */
   _ratingBadges(film, compact = false) {
     const r = film.ratings;
     if (!r) return "";
@@ -622,7 +626,7 @@ class CinevilleCard extends HTMLElement {
       const score = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(r.imdb);
       const votes = r.imdb_votes != null ? ` · ${new Intl.NumberFormat(language).format(r.imdb_votes)} ${this._t.votes}` : "";
       const inner = `<b>IMDb</b> ${esc(score)}`;
-      const href = r.imdb_id && /^tt\d+$/.test(r.imdb_id) ? `https://www.imdb.com/title/${r.imdb_id}/` : "";
+      const href = !compact && r.imdb_id && /^tt\d+$/.test(r.imdb_id) ? `https://www.imdb.com/title/${r.imdb_id}/` : "";
       out.push(
         href
           ? `<a class="rating imdb" href="${href}" target="_blank" rel="noopener noreferrer" title="IMDb${esc(votes)}">${inner}</a>`
