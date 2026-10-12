@@ -1,6 +1,8 @@
 # Cineville for Home Assistant
 
-Shows the [Cineville](https://cineville.de) program of your city on your Home Assistant dashboard: what's on today
+Cineville is the most fun money can buy in any major German city. Their team is amazing, their offer is great, and even their website and app are pretty good. But what if you are a nerd and put dashboards everywhere in your house?
+
+Cineville for HAss shows the [Cineville](https://cineville.de) Germany programme of your city on your Home Assistant dashboard: what's on today
 (and the next days) in your cinemas, with posters, IMDb and Rotten Tomatoes ratings, and, if you log in, your
 watchlist highlighted and the films you've already seen dimmed.
 
