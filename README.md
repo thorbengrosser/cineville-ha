@@ -1,117 +1,175 @@
-# Cineville for Home Assistant
+<p align="center">
+  <img src="https://raw.githubusercontent.com/thorbengrosser/cineville-ha/main/custom_components/cineville/brand/icon@2x.png" width="112" alt="Cineville for Home Assistant icon">
+</p>
+
+<h1 align="center">Cineville for Home Assistant</h1>
+
+<p align="center">
+  Show the upcoming programme for your Cineville movie pass, right on your Home Assistant dashboard.
+</p>
+
+<p align="center">
+  <a href="https://hacs.xyz/docs/faq/custom_repositories"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom"></a>
+  <a href="https://github.com/thorbengrosser/cineville-ha/releases"><img src="https://img.shields.io/github/v/release/thorbengrosser/cineville-ha?include_prereleases&label=release" alt="Latest release"></a>
+  <a href="https://github.com/thorbengrosser/cineville-ha/actions/workflows/validate.yml"><img src="https://github.com/thorbengrosser/cineville-ha/actions/workflows/validate.yml/badge.svg" alt="Validate"></a>
+  <img src="https://img.shields.io/badge/Home%20Assistant-2025.8%2B-18BCF2?logo=homeassistant&logoColor=white" alt="Home Assistant 2025.8+">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/thorbengrosser/cineville-ha" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/thorbengrosser/cineville-ha/main/docs/images/card-films-light.png" width="32%" alt="The card grouped by film: posters, ratings, watchlist markers and showtimes">
+  <img src="https://raw.githubusercontent.com/thorbengrosser/cineville-ha/main/docs/images/card-list-dark.png" width="32%" alt="The card as a chronological list in dark mode">
+  <img src="https://raw.githubusercontent.com/thorbengrosser/cineville-ha/main/docs/images/card-watchlist-compact-dark.png" width="32%" alt="Combined watchlists of two people, with an already seen film compacted to one line">
+</p>
 
 Cineville is the most fun money can buy in any major German city. Their team is amazing, their offer is great, and even their website and app are pretty good. But what if you are a nerd and put dashboards everywhere in your house?
 
-Cineville for HAss shows the [Cineville](https://cineville.de) Germany programme of your city on your Home Assistant dashboard: what's on today
-(and the next days) in your cinemas, with posters, IMDb and Rotten Tomatoes ratings, and, if you log in, your
-watchlist highlighted and the films you've already seen dimmed.
+Cineville for HAss shows the [Cineville](https://cineville.de) Germany programme of your city on your Home Assistant dashboard: what's on today (and the next days) in your cinemas, with posters, IMDb and Rotten Tomatoes ratings, and, if you log in, your watchlist highlighted and the films you've already seen dimmed.
 
-> **Unofficial.** This is not made or endorsed by Cineville. It uses the same API as the Cineville website and app,
-> which is undocumented and can change without notice. See [docs/api](docs/api/README.md).
+> [!NOTE]
+> **Unofficial.** This project is not made or endorsed by Cineville. It uses the same API as the Cineville website and app, which is undocumented and can change without notice ([API notes](docs/api/README.md)).
 
-## What you get
+## ✨ Features
 
-- **A dashboard card**: grouped by film or as a chronological list, with a day picker, cinema and start-time filters,
-  ticket links, and a "watchlist only" toggle. Times and dates follow your Home Assistant profile (language,
-  12/24-hour time, time zone, date format).
-- **Sensors**: *Upcoming screenings today*, *Next screening* (a timestamp with film, cinema and ticket link as
-  attributes) and, when logged in, *Watchlist films today* (with who wants to see each film), e.g. for a notification
-  when a film from your watchlist is showing tonight.
-- **An action**, `cineville.get_program`, that returns a whole day's program (used by the card, also handy in scripts).
+- 🎬 **Dashboard card**: grouped by film or as a chronological list, day picker for the coming week, cinema and start-time filters, posters, OV/OmU/OmeU/DF labels, specials, ticket links. It fits any card size, follows your theme (light and dark), and speaks English and German.
+- 🔖 **Your watchlist**: log in with your Cineville account to highlight watchlist films or show only those. Seen films can be dimmed, compacted to one line, or hidden.
+- 👥 **The whole household**: connect several accounts; coloured initials show whose watchlist a film is on, and a filter finds the films you *all* want to see.
+- 🍅 **Ratings**: IMDb and Rotten Tomatoes badges (with free TMDB and OMDb API keys).
+- 🤖 **Automations**: sensors for upcoming screenings, the next screening, and watchlist films showing today, plus a `cineville.get_program` action.
+- 🔐 **Easy login**: enter your email in Home Assistant and type in the code Cineville emails you. No passwords, nothing to copy.
 
-Cineville currently covers 15 German cities (Berlin, Hamburg, Köln, …).
+Cineville currently covers 15 German cities: Aachen, Berlin, Bonn, Braunschweig, Bremen, Düsseldorf, Freiburg, Fürth, Hamburg, Köln, Leverkusen, Nürnberg, Potsdam, Wuppertal and Würzburg.
 
-## Installation
+## 📦 Installation
 
-1. In HACS: *⋮ → Custom repositories*, add `https://github.com/thorbengrosser/cineville-ha` as an **Integration**.
-2. Search for **Cineville** in HACS, download it and restart Home Assistant.
-3. *Settings → Devices & services → Add integration → Cineville*: pick your city and the cinemas you care about.
-   If you keep all cinemas selected, cinemas that join Cineville later are included automatically.
-4. On a dashboard: *Add card → Cineville*. The card comes with the integration, which registers it as a dashboard
-   resource by itself (if your resources are managed in YAML, it loads the card another way).
+[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=thorbengrosser&repository=cineville-ha&category=integration)
 
-Requires Home Assistant 2025.8 or newer.
+Or manually in HACS:
 
-## Options
+1. *HACS → ⋮ → Custom repositories*, add `https://github.com/thorbengrosser/cineville-ha` with type **Integration**.
+2. Search for **Cineville**, download it, and restart Home Assistant.
 
-*Settings → Devices & services → Cineville → Configure* has three pages:
+Requires Home Assistant **2025.8** or newer.
 
-### Cinemas
+## ⚙️ Setup
 
-Change which cinemas are included.
+[![Open your Home Assistant instance and start setting up Cineville.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=cineville)
 
-### Cineville accounts (optional)
+1. *Settings → Devices & services → Add integration → Cineville*.
+2. Pick your city, then the cinemas you care about. If you keep all of them selected, cinemas that join Cineville later are included automatically.
+3. On a dashboard: *Add card → Cineville*. The card ships with the integration; there's no resource to add.
 
-Log in to see your watchlist and the films you've already seen. Several people can connect their accounts
-(*Add an account*); their watchlists are combined on the card. Each watchlist film shows coloured initials of whose
-list it's on, a filter switches between all films, anyone's watchlist, everyone's watchlist (films you all want to see)
-or one person's, and a film only counts as seen (dimmed) once everyone has seen it. Cineville has no passwords: choose *Add an account*, enter your
-email address, and type in the code Cineville emails you. After that, Home Assistant keeps the login fresh by itself.
-If Cineville ever changes their login pages and this stops working, *Add an account manually* is a fallback: you log
-in in a browser and copy a code from the page you end up on (the dialog explains how). If it ever expires, you'll get a "re-authentication required" notice; the program
-keeps working in the meantime.
+Afterwards, *Configure* on the integration has three pages:
 
-### Ratings (optional)
+| Page | What it does |
+|---|---|
+| **Cinemas** | Change which cinemas are included. |
+| **Cineville account** | *Add an account*: enter your email address, then the code Cineville emails you. Add as many people as you like; their watchlists are combined on the card. *Add an account manually* is a fallback in case Cineville changes their login pages. *Remove an account* logs out. If a login ever expires, Home Assistant asks you to renew it; the programme keeps working meanwhile. |
+| **Ratings** | Two free API keys: [TMDB](https://www.themoviedb.org/settings/api) finds the film (Cineville only has German titles) and [OMDb](https://www.omdbapi.com/apikey.aspx) provides the ratings. Ratings are cached and the integration stays well within OMDb's free 1,000 requests per day. IMDb ratings with fewer than 100 votes are hidden; brand-new German releases often have no rating yet. |
 
-IMDb and Rotten Tomatoes badges need two free API keys:
-[TMDB](https://www.themoviedb.org/settings/api) (to find the film, since Cineville only has German titles) and
-[OMDb](https://www.omdbapi.com/apikey.aspx) (for the ratings). Ratings are cached (complete ones are re-checked weekly,
-incomplete ones daily) and the integration stays well within OMDb's free 1,000 requests per day. IMDb ratings with
-fewer than 100 votes are hidden. New German releases often have no rating yet; they simply show no badge.
+## 🎬 The card
 
-## The card
-
-Add it via *Add card → Cineville* (it has a visual editor) or in YAML:
+The card has a visual editor. In YAML:
 
 ```yaml
 type: custom:cineville-card
-view: films           # films (grouped by film) or list (chronological); switchable on the card
+view: films           # films or list; switchable on the card
 days: 7               # days in the day picker (1–8)
-show_past: false      # today: also show screenings that have already started
-watchlist: highlight  # highlight or only (also switchable on the card); needs the account login
-seen: dim             # films seen by everyone: show, dim, compact (one dimmed line: time and title) or hide
-# title: Kino heute
-# max_height: 500px     # for dashboards without a grid; in sections dashboards just resize the card
-# config_entry_id: ...  # only if you set up several cities
+seen: dim             # show, dim, compact or hide films that everyone has seen
+watchlist: highlight  # highlight or only; switchable on the card
 ```
 
-The view and the "watchlist only" toggle are remembered per browser.
+| Option | Default | Description |
+|---|---|---|
+| `view` | `films` | `films` (grouped by film, with poster and description) or `list` (one row per screening). |
+| `days` | `7` | How many days the day picker offers (1–8). A Cineville day runs from 04:00 to 04:00, so a late show after midnight still belongs to "today". |
+| `show_past` | `false` | Also show today's screenings that have already started. |
+| `watchlist` | `highlight` | `highlight` watchlist films, or show `only` those. With several accounts, a dropdown picks anyone's, everyone's or one person's watchlist. |
+| `seen` | `dim` | Films everyone has seen: `show`, `dim`, `compact` (one dimmed line with time and title) or `hide`. |
+| `title` | `Cineville <city>` | Card title. |
+| `max_height` | none | Maximum height, e.g. `500px`, for dashboards without a grid. In sections dashboards, just resize the card. |
+| `config_entry_id` | none | Only needed if you set up several cities. |
 
-## The `cineville.get_program` action
+The chosen view and watchlist filter are remembered per browser. Times and dates follow your Home Assistant profile settings.
+
+## 🤖 Sensors and automations
+
+| Entity | State | Attributes |
+|---|---|---|
+| `sensor.cineville_<city>_upcoming_screenings_today` | screenings still to come today | `films`, `screenings_total`, `day` |
+| `sensor.cineville_<city>_next_screening` | start time of the next screening | `film`, `venue`, `language`, `specials`, `end`, `poster`, `ticketing_url` |
+| `sensor.cineville_<city>_watchlist_films_today` | watchlist films (not yet seen by everyone) still showing today | `films`: title, start, venue, language, who wants to see it |
+
+Get a notification when a film from your watchlist is on today:
+
+```yaml
+automation:
+  - alias: "Cineville: watchlist film today"
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.cineville_hamburg_watchlist_films_today
+        above: 0
+    actions:
+      - action: notify.mobile_app_your_phone
+        data:
+          title: "🎬 On your watchlist today"
+          message: >-
+            {% for f in state_attr('sensor.cineville_hamburg_watchlist_films_today', 'films') %}
+            {{ f.title }}: {{ as_timestamp(f.start) | timestamp_custom('%H:%M') }} at {{ f.venue }}
+            {% endfor %}
+```
+
+The `cineville.get_program` action returns a whole day's programme, for your own scripts and templates:
 
 ```yaml
 action: cineville.get_program
 data:
   date: "2026-10-13"   # optional: today (default) up to 7 days ahead
-  # config_entry_id: … # only if you set up several cities
 response_variable: program
 ```
 
-Returns `{day, today, city, timezone, logged_in, showtimes: [...]}`. Each showtime has `start`, `end`, `venue`,
-`language_label` (OV/OmU/OmeU/DF), `specials`, `ticketing_url` and a `film` with title, poster, director, duration,
-`ratings`, `watchlist_by` / `seen_by` (account IDs; names in the top-level `accounts` list), `on_watchlist`
-(on anyone's watchlist) and `seen` (seen by everyone). A Cineville day runs from 04:00 to 04:00, like on cineville.de.
+<details>
+<summary>What's in the response</summary>
 
-## Troubleshooting
+`{day, today, city, timezone, logged_in, accounts, showtimes: [...]}`. Each showtime has `start`, `end`, `venue`, `language_label` (OV/OmU/OmeU/DF), `specials`, `ticketing_url` and a `film` with title, poster, director, duration, `ratings`, `watchlist_by` / `seen_by` (account IDs; names in `accounts`), `on_watchlist` (on anyone's watchlist) and `seen` (seen by everyone).
 
-- **The card doesn't appear in the card picker, or shows "Configuration error"**: reload the browser once after
-  installing or updating. If it persists, check that *Settings → Dashboards → ⋮ → Resources* lists
-  `/cineville_static/cineville-card.js` (the integration adds it on startup).
-- **No program / "could not load"**: check *Settings → System → Logs* for `cineville`. If Cineville changed their
-  API, the weekly API check in this repository's GitHub Actions will usually have spotted it too.
-- **Login code not accepted**: the emailed code is valid for a few minutes; just try again. With the manual fallback,
-  a code only works with the link shown in the same dialog.
+</details>
 
-## Development
+## 🛠 Troubleshooting
 
-- Tests: `python3 -m venv .venv && .venv/bin/pip install -r requirements_test.txt && .venv/bin/python -m pytest`
-- Card preview without Home Assistant: `python3 -m http.server 8765` in the repo root, then open
-  <http://localhost:8765/dev/preview.html>. It renders the real card with a recorded Hamburg program and real ratings
-  (`dev/fixtures/`); URL parameters switch theme, language, size, login state and time format.
-- [`docs/design.md`](docs/design.md): design decisions and milestones.
-- [`docs/api/`](docs/api/README.md): reverse-engineered documentation of the Cineville API, including the login flow.
-- [`tools/`](tools/): the login end-to-end check and the ratings matching spike.
-- [`cinevillepreview.php`](cinevillepreview.php): the original PHP page this project grew out of.
+<details>
+<summary>The card shows "Configuration error" or is missing from the card picker</summary>
+
+Reload the browser once after installing or updating. If it persists, check that *Settings → Dashboards → ⋮ → Resources* lists `/cineville_static/cineville-card.js`; the integration adds it on startup.
+
+</details>
+
+<details>
+<summary>No programme / "could not load the program"</summary>
+
+Check *Settings → System → Logs* for `cineville`. If Cineville changed their API, the weekly API check in this repository's GitHub Actions has usually spotted it too; please open an issue.
+
+</details>
+
+<details>
+<summary>The login code isn't accepted</summary>
+
+The emailed code is valid for a few minutes; just try again. With *Add an account manually*, a code only works together with the link shown in the same dialog.
+
+</details>
+
+## 🧑‍💻 Development
+
+- **Tests**: `python3 -m venv .venv && .venv/bin/pip install -r requirements_test.txt && .venv/bin/python -m pytest`
+- **Card preview without Home Assistant**: run `python3 -m http.server 8765` in the repository and open <http://localhost:8765/dev/preview.html>. It renders the real card with a recorded Hamburg programme and real ratings; URL parameters switch theme, language, size, login state and more.
+- **Screenshots**: `python3 tools/make_screenshots.py` regenerates the images above with headless Chrome.
+- **Docs**: [design decisions](docs/design.md) and the [reverse-engineered Cineville API](docs/api/README.md), including the login flow.
+- [`cinevillepreview.php`](cinevillepreview.php) is the original PHP page this project grew out of.
+
+## 🙏 Credits
+
+- Programme data: [Cineville](https://cineville.de), via its (unofficial) API.
+- Ratings: [OMDb API](https://www.omdbapi.com/) (IMDb and Rotten Tomatoes ratings) and [TMDB](https://www.themoviedb.org/) (matching films). This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## License
 

@@ -8,7 +8,7 @@
     Renders the real card file with a mock `hass` that answers cineville.get_program from
     dev/fixtures/program-hamburg.json. Serve the repo root (python3 -m http.server) and open /dev/preview.html.
     Query params: ?theme=dark  &lang=en  &width=380  &view=list  &height=400  &max_height=400
-                  &login=0 (not logged in)  &people=2  &seen=show|dim|compact|hide  &time_format=12|24|language|system  &date_format=DMY|MDY|YMD  &time_zone=server
+                  &login=0 (not logged in)  &people=2  &seen=show|dim|compact|hide  &clean=1  &day=1  &film=Title  &time_format=12|24|language|system  &date_format=DMY|MDY|YMD  &time_zone=server
   -->
   <style>
     :root {
@@ -67,7 +67,7 @@
     // Simulate logged-in accounts (?people=2 for two): mark films as on watchlists / seen, deterministically
     const loggedIn = params.get("login") !== "0";
     const people = loggedIn
-      ? [{ id: "u1", name: "Thorben" }, { id: "u2", name: "Anna" }].slice(0, Number(params.get("people") || 1))
+      ? [{ id: "u1", name: "Alex" }, { id: "u2", name: "Sam" }].slice(0, Number(params.get("people") || 1))
       : [];
     const filmIds = [...new Set(Object.values(fixture).flatMap((p) => p.showtimes.map((s) => s.film.id)))].sort();
     for (const program of Object.values(fixture)) {
@@ -118,6 +118,22 @@
       Object.entries(changes).forEach(([k, v]) => (v === null ? p.delete(k) : p.set(k, v)));
       return `<a href="?${p}">${label}</a>`;
     };
+    // For README screenshots: ?clean=1 hides these links, ?day=N picks the Nth day, ?film=Title scrolls to a film
+    if (params.get("clean")) document.getElementById("controls").style.display = "none";
+    if (params.get("day") || params.get("film")) {
+      const until = async (fn) => { for (let i = 0; i < 100 && !fn(); i++) await new Promise((r) => setTimeout(r, 50)); };
+      await until(() => card.shadowRoot.querySelector(".day"));
+      if (params.get("day")) {
+        card.shadowRoot.querySelectorAll(".day")[Number(params.get("day"))].click();
+        await until(() => card.shadowRoot.querySelector(".film, .row"));
+      }
+      if (params.get("film")) {
+        const content = card.shadowRoot.querySelector(".content");
+        const target = [...content.children].find((el) => el.textContent.includes(params.get("film")));
+        if (target) content.scrollTop = target.offsetTop - content.offsetTop;
+      }
+      document.body.dataset.ready = "1";
+    }
     document.getElementById("controls").innerHTML = `Preview (fixture ${today}): ` +
       link("light", { theme: null }) + link("dark", { theme: "dark" }) +
       link("de", { lang: "de" }) + link("en", { lang: "en" }) +
