@@ -1,8 +1,12 @@
 """OAuth login for Cineville member features (watchlist, seen films).
 
-Uses the mobile app's public client: authorization code + PKCE, no client secret.
-Home Assistant can't receive the cineville:// redirect, so the authorize URL asks for
-response_mode=form_post and the user pastes the code from that (blank) page.
+Uses the mobile app's public client: authorization code + PKCE, no client secret. Two ways to get the code:
+
+- OtpLogin (default): Home Assistant fills in Cineville's own login pages: email address -> Cineville emails a
+  one-time code -> the user types it into HA -> the form_post page carries the OAuth code.
+- Manual fallback: the user opens the authorize URL in a browser and pastes the code from the blank
+  form_post page (Home Assistant can't receive the cineville:// redirect).
+
 See docs/api/authentication.md.
 """
 
@@ -14,14 +18,21 @@ import re
 import secrets
 import time
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from typing import Any
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
 import aiohttp
 
 from .const import API_URL, APP_CLIENT_ID, OAUTH_SCOPE, REDIRECT_URI
-from .exceptions import CinevilleAuthError, CinevilleConnectionError, CinevilleError
+from .exceptions import (
+    CinevilleAuthError,
+    CinevilleConnectionError,
+    CinevilleError,
+    CinevilleLoginPageError,
+    CinevilleOtpError,
+)
 
 # Refresh the access token this many seconds before it expires
 REFRESH_MARGIN = 120
@@ -182,3 +193,97 @@ class CinevilleAuth:
         except (aiohttp.ClientError, TimeoutError):
             pass  # best effort
         self.tokens = None
+
+
+# --- Login through Cineville's own pages (email + one-time code) ---------------------------------------
+
+EMAIL_FIELD = "Input.EmailAddress"
+OTP_FIELD = "Input.Otp"
+
+
+@dataclass(slots=True)
+class _Form:
+    action: str
+    fields: dict[str, str] = field(default_factory=dict)  # name -> value (hidden fields keep their value)
+
+
+class _FormParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.forms: list[_Form] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        a = dict(attrs)
+        if tag == "form":
+            self.forms.append(_Form(action=a.get("action") or ""))
+        elif tag in ("input", "textarea", "select") and self.forms and a.get("name"):
+            self.forms[-1].fields[a["name"]] = a.get("value") or ""
+
+
+def _find_form(html: str, field_name: str) -> _Form | None:
+    parser = _FormParser()
+    parser.feed(html)
+    return next((f for f in parser.forms if field_name in f.fields), None)
+
+
+class OtpLogin:
+    """One email + one-time-code login, driven step by step by the config flow.
+
+    Uses its own cookie session (Cineville's pages keep an anti-forgery cookie); call close() when done.
+    """
+
+    def __init__(self, session: aiohttp.ClientSession, client_id: str = APP_CLIENT_ID, api_url: str = API_URL) -> None:
+        self._session = session
+        self._request = create_login(client_id, api_url)
+        self._page_url: str | None = None
+        self._otp_form: _Form | None = None
+
+    @property
+    def code_verifier(self) -> str:
+        return self._request.code_verifier
+
+    async def _send(self, method: str, url: str, data: dict[str, str] | None = None) -> tuple[str, str]:
+        try:
+            async with self._session.request(
+                method, url, data=data, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                if resp.status >= 500:
+                    raise CinevilleConnectionError(f"Cineville login page: HTTP {resp.status}")
+                return str(resp.url), await resp.text()
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise CinevilleConnectionError(f"Cineville login page: {err}") from err
+
+    async def start(self, email: str) -> None:
+        """Open the login page and submit the email address; Cineville then emails a one-time code."""
+        url, html = await self._send("GET", self._request.authorize_url)
+        form = _find_form(html, EMAIL_FIELD)
+        if form is None:
+            raise CinevilleLoginPageError("No email field on Cineville's login page")
+        fields = {**form.fields, EMAIL_FIELD: email.strip()}
+        url, html = await self._send("POST", urljoin(url, form.action) if form.action else url, fields)
+        self._otp_form = _find_form(html, OTP_FIELD)
+        if self._otp_form is None:
+            # Still on the email page (e.g. unknown address) or an unexpected page
+            if _find_form(html, EMAIL_FIELD) is not None:
+                raise CinevilleAuthError("Cineville didn't accept the email address")
+            raise CinevilleLoginPageError("No code field after submitting the email address")
+        self._page_url = url
+
+    async def verify(self, otp: str) -> str:
+        """Submit the emailed code; returns the OAuth authorization code (exchange it with code_verifier)."""
+        if self._otp_form is None or self._page_url is None:
+            raise CinevilleLoginPageError("start() must succeed before verify()")
+        form = self._otp_form
+        fields = {**form.fields, OTP_FIELD: re.sub(r"\s+", "", otp)}
+        url, html = await self._send("POST", urljoin(self._page_url, form.action) if form.action else self._page_url, fields)
+        result = _find_form(html, "code")
+        if result is not None and result.fields.get("code"):
+            if result.fields.get("state") != self._request.state:
+                raise CinevilleLoginPageError("State mismatch on the login callback")
+            return result.fields["code"]
+        retry = _find_form(html, OTP_FIELD)
+        if retry is not None:
+            # Wrong or expired code: the same page again, with a fresh anti-forgery token
+            self._otp_form, self._page_url = retry, url
+            raise CinevilleOtpError("Code not accepted")
+        raise CinevilleLoginPageError("Unexpected page after submitting the code")

@@ -13,6 +13,7 @@ CONF_VENUE_IDS = "venue_ids"
 # (see accounts.py; config entry version 1 stored a single account directly in entry.data)
 CONF_ACCOUNTS = "accounts"
 CONF_TOKENS = "tokens"
+CONF_EMAIL = "email"
 CONF_USER_ID = "user_id"
 CONF_ACCOUNT_NAME = "account_name"
 # Ratings API keys in entry.data (set by the "Ratings" options step)

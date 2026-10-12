@@ -17,7 +17,21 @@
       },
       "reauth_confirm": {
         "title": "Renew the Cineville login: {name}",
-        "description": "The Cineville login of **{name}** has expired. Please log in again with that account.\n\n1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
+        "description": "The Cineville login of **{name}** has expired. Enter that account's email address; Cineville will then email a code.",
+        "data": {
+          "email": "Email address"
+        }
+      },
+      "reauth_code": {
+        "title": "Enter the code",
+        "description": "Cineville has emailed a code to **{email}**. Enter it here.",
+        "data": {
+          "code": "Code"
+        }
+      },
+      "reauth_manual": {
+        "title": "Renew the Cineville login: {name}",
+        "description": "Cineville's login page looks different than expected, so this time it works manually.\n\n1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
         "data": {
           "code": "Code"
         }
@@ -28,7 +42,10 @@
       "no_venues_selected": "Select at least one cinema.",
       "invalid_code": "That doesn't look like a code.",
       "login_failed": "The code was not accepted (expired, already used, or from another link). Please use the new link above.",
-      "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above)."
+      "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above).",
+      "invalid_email": "Cineville didn't accept this email address.",
+      "invalid_otp": "The code is wrong or has expired. Please try again.",
+      "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”."
     },
     "abort": {
       "already_configured": "This city is already set up.",
@@ -56,12 +73,9 @@
       },
       "login": {
         "title": "Add a Cineville account",
-        "description": "1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
+        "description": "Enter the email address of your Cineville account. Cineville will then email you a code.",
         "data": {
-          "code": "Code"
-        },
-        "data_description": {
-          "code": "For your watchlist and seen films."
+          "email": "Email address"
         }
       },
       "logout": {
@@ -83,8 +97,23 @@
         "title": "Cineville accounts",
         "description": "Connected: **{names}**. The watchlists of all connected accounts are combined on the card.",
         "menu_options": {
-          "login": "Add an account (or log in again)",
+          "login": "Add an account",
+          "login_manual": "Add an account manually (fallback)",
           "logout": "Remove an account"
+        }
+      },
+      "login_code": {
+        "title": "Enter the code",
+        "description": "Cineville has emailed a code to **{email}**. Enter it here.",
+        "data": {
+          "code": "Code"
+        }
+      },
+      "login_manual": {
+        "title": "Add an account manually",
+        "description": "1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
+        "data": {
+          "code": "Code"
         }
       }
     },
@@ -96,7 +125,10 @@
       "both_keys_needed": "Enter both keys (or clear both).",
       "invalid_tmdb_key": "TMDB rejected the key.",
       "invalid_omdb_key": "OMDb rejected the key.",
-      "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above)."
+      "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above).",
+      "invalid_email": "Cineville didn't accept this email address.",
+      "invalid_otp": "The code is wrong or has expired. Please try again.",
+      "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”."
     },
     "abort": {
       "cannot_connect": "Could not reach Cineville. Try again later."

@@ -135,7 +135,7 @@ def main() -> int:
         print("No email form found; stopping.")
         return 1
     email_field = next(i["name"] for i in user_fields(email_form))
-    email = input("\nYour Cineville email address (not printed, only sent to Cineville): ").strip()
+    email = input("\nYour Cineville email address (only sent to Cineville; the script's output never includes it): ").strip()
 
     # 2. Submit email -> code form
     url, status, html = submit(s, url, email_form, {email_field: email})

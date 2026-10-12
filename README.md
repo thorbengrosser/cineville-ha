@@ -44,10 +44,10 @@ Change which cinemas are included.
 Log in to see your watchlist and the films you've already seen. Several people can connect their accounts
 (*Add an account*); their watchlists are combined on the card. Each watchlist film shows coloured initials of whose
 list it's on, a filter switches between all films, anyone's watchlist, everyone's watchlist (films you all want to see)
-or one person's, and a film only counts as seen (dimmed) once everyone has seen it. Cineville has no passwords: you get a login link, log
-in with your email address and the code Cineville emails you, and then copy one more code from the (blank) page you
-end up on into Home Assistant. The dialog walks you through it; it's easiest on a computer. After that, Home Assistant
-keeps the login fresh by itself. If it ever expires, you'll get a "re-authentication required" notice; the program
+or one person's, and a film only counts as seen (dimmed) once everyone has seen it. Cineville has no passwords: choose *Add an account*, enter your
+email address, and type in the code Cineville emails you. After that, Home Assistant keeps the login fresh by itself.
+If Cineville ever changes their login pages and this stops working, *Add an account manually* is a fallback: you log
+in in a browser and copy a code from the page you end up on (the dialog explains how). If it ever expires, you'll get a "re-authentication required" notice; the program
 keeps working in the meantime.
 
 ### Ratings (optional)
@@ -96,7 +96,8 @@ Returns `{day, today, city, timezone, logged_in, showtimes: [...]}`. Each showti
 - **The card doesn't appear in the card picker**: reload the browser once after installing or updating.
 - **No program / "could not load"**: check *Settings → System → Logs* for `cineville`. If Cineville changed their
   API, the weekly API check in this repository's GitHub Actions will usually have spotted it too.
-- **Login code not accepted**: codes are valid for about 5 minutes and only work with the link shown in the same dialog.
+- **Login code not accepted**: the emailed code is valid for a few minutes; just try again. With the manual fallback,
+  a code only works with the link shown in the same dialog.
 
 ## Development
 

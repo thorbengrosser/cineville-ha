@@ -79,6 +79,25 @@ Other endpoints: `/connect/revocation`, `/connect/introspect`, `/connect/endsess
   The bundle has an Expo Router route `/login-callback` and the scheme `cineville` (`assets/app.config`).
   The client ID isn't in the bundle; it comes from `/api/tenants`.
 
+## Login through Cineville's own pages (used by the integration, verified 2026-10-12)
+
+With the app client and `response_mode=form_post`, Home Assistant can run the whole login itself, with a private
+cookie session (`auth.OtpLogin`):
+
+1. `GET /connect/authorize?…` → redirected to `/auth/login?ReturnUrl=…` with a form: hidden `Input.ReturnUrl`,
+   `Input.EmailAddress` (type email), hidden `__RequestVerificationToken`; plus an anti-forgery cookie.
+   No captcha.
+2. `POST` the form with the email → `/auth/verifyotp?returnUrl=…` (Cineville emails a one-time code): hidden
+   `Input.ReturnUrl`, `EmailAddress`, `TokenLifespanMinutes`, a new `__RequestVerificationToken`, and
+   `Input.Otp` (text, `inputmode=numeric`, `maxlength=6`, `autocomplete=one-time-code`).
+3. `POST` with `Input.Otp` → redirected to `/connect/authorize/callback?…`, which returns the `form_post` page:
+   a form targeting `cineville://login-callback` with hidden `code`, `scope`, `state`, `session_state`, `iss`.
+   A wrong code shows the code form again (with a fresh token), so the user can retry.
+4. Exchange `code` + PKCE verifier at `/connect/token` as usual.
+
+Checked end to end with `tools/cineville_otp_login_probe.py` (token exchange, watchlist read, revocation).
+The paste-the-code method below remains as a fallback in case these pages change.
+
 ## Options for the Home Assistant integration
 
 Ordered by preference (2026-10-11):

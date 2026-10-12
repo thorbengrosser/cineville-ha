@@ -17,7 +17,21 @@
       },
       "reauth_confirm": {
         "title": "Cineville-Login erneuern: {name}",
-        "description": "Der Cineville-Login von **{name}** ist abgelaufen. Bitte mit diesem Konto neu anmelden.\n\n1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
+        "description": "Der Cineville-Login von **{name}** ist abgelaufen. Gib die E-Mail-Adresse dieses Kontos ein; Cineville schickt dann einen Code.",
+        "data": {
+          "email": "E-Mail-Adresse"
+        }
+      },
+      "reauth_code": {
+        "title": "Code eingeben",
+        "description": "Cineville hat einen Code an **{email}** geschickt. Gib ihn hier ein.",
+        "data": {
+          "code": "Code"
+        }
+      },
+      "reauth_manual": {
+        "title": "Cineville-Login erneuern: {name}",
+        "description": "Die Login-Seite von Cineville sieht anders aus als erwartet, darum geht es diesmal manuell.\n\n1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
         "data": {
           "code": "Code"
         }
@@ -28,7 +42,10 @@
       "no_venues_selected": "Bitte mindestens ein Kino auswählen.",
       "invalid_code": "Das sieht nicht nach einem Code aus.",
       "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden.",
-      "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben)."
+      "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben).",
+      "invalid_email": "Cineville hat diese E-Mail-Adresse nicht akzeptiert.",
+      "invalid_otp": "Der Code stimmt nicht oder ist abgelaufen. Bitte noch einmal versuchen.",
+      "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden."
     },
     "abort": {
       "already_configured": "Diese Stadt ist bereits eingerichtet.",
@@ -56,12 +73,9 @@
       },
       "login": {
         "title": "Cineville-Konto hinzufügen",
-        "description": "1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
+        "description": "Gib die E-Mail-Adresse deines Cineville-Kontos ein. Cineville schickt dir daraufhin einen Code.",
         "data": {
-          "code": "Code"
-        },
-        "data_description": {
-          "code": "Für Merkliste und gesehene Filme."
+          "email": "E-Mail-Adresse"
         }
       },
       "logout": {
@@ -83,8 +97,23 @@
         "title": "Cineville-Konten",
         "description": "Verbunden: **{names}**. Die Merklisten aller verbundenen Konten werden auf der Karte zusammengeführt.",
         "menu_options": {
-          "login": "Konto hinzufügen (oder erneut anmelden)",
+          "login": "Konto hinzufügen",
+          "login_manual": "Konto manuell hinzufügen (Notlösung)",
           "logout": "Konto entfernen"
+        }
+      },
+      "login_code": {
+        "title": "Code eingeben",
+        "description": "Cineville hat einen Code an **{email}** geschickt. Gib ihn hier ein.",
+        "data": {
+          "code": "Code"
+        }
+      },
+      "login_manual": {
+        "title": "Konto manuell hinzufügen",
+        "description": "1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
+        "data": {
+          "code": "Code"
         }
       }
     },
@@ -96,7 +125,10 @@
       "both_keys_needed": "Bitte beide Schlüssel eintragen (oder beide leeren).",
       "invalid_tmdb_key": "TMDB hat den Schlüssel abgelehnt.",
       "invalid_omdb_key": "OMDb hat den Schlüssel abgelehnt.",
-      "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben)."
+      "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben).",
+      "invalid_email": "Cineville hat diese E-Mail-Adresse nicht akzeptiert.",
+      "invalid_otp": "Der Code stimmt nicht oder ist abgelaufen. Bitte noch einmal versuchen.",
+      "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden."
     },
     "abort": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."

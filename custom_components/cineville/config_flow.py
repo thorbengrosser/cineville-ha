@@ -1,17 +1,20 @@
-"""Config flow for Cineville: pick a city, then the cinemas. Options: cinemas and the Cineville account."""
+"""Config flow for Cineville: pick a city, then the cinemas.
+
+Options: cinemas, Cineville accounts (several people; email + one-time code, or a manual fallback) and ratings keys.
+"""
 
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
-
-from collections.abc import Mapping
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_create_clientsession, async_get_clientsession
 from homeassistant.helpers.selector import (
     SelectOptionDict,
     SelectSelector,
@@ -24,12 +27,13 @@ from homeassistant.helpers.selector import (
 
 from . import accounts as account_store
 from .api import CinevilleClient
-from .auth import CinevilleAuth, LoginRequest, Tokens, create_login, extract_code
+from .auth import CinevilleAuth, LoginRequest, OtpLogin, Tokens, create_login, extract_code
 from .const import (
     CONF_ACCOUNT_NAME,
     CONF_ACCOUNTS,
     CONF_CITY_ID,
     CONF_CITY_NAME,
+    CONF_EMAIL,
     CONF_OMDB_KEY,
     CONF_TMDB_KEY,
     CONF_TOKENS,
@@ -37,11 +41,14 @@ from .const import (
     CONF_VENUE_IDS,
     DOMAIN,
 )
-from .exceptions import CinevilleAuthError, CinevilleError
-from .ratings import RatingsAuthError, RatingsClient, RatingsError
+from .exceptions import CinevilleAuthError, CinevilleError, CinevilleLoginPageError, CinevilleOtpError
 from .models import City, Venue
+from .ratings import RatingsAuthError, RatingsClient, RatingsError
 
 _LOGGER = logging.getLogger(__name__)
+
+CONF_CODE = "code"
+CONF_REMOVE = "remove"
 
 
 def _venue_schema(venues: list[Venue], selected: list[str]) -> vol.Schema:
@@ -58,23 +65,108 @@ def _to_stored(selected: list[str], venues: list[Venue]) -> list[str]:
     return [] if set(selected) >= {v.id for v in venues} else list(selected)
 
 
-CONF_CODE = "code"
-CONF_REMOVE = "remove"
+def _email_schema(suggested: str | None = None) -> vol.Schema:
+    return vol.Schema({
+        vol.Required(CONF_EMAIL, description={"suggested_value": suggested}): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.EMAIL, autocomplete="email")
+        )
+    })
 
-LOGIN_SCHEMA = vol.Schema({vol.Required(CONF_CODE): TextSelector()})
+
+OTP_SCHEMA = vol.Schema({
+    vol.Required(CONF_CODE): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT, autocomplete="one-time-code"))
+})
+PASTE_SCHEMA = vol.Schema({vol.Required(CONF_CODE): TextSelector()})
 
 
-async def _complete_login(hass: HomeAssistant, login: LoginRequest, pasted: str) -> tuple[dict[str, Any], str | None]:
-    """Exchange the pasted code. Returns (account dict for accounts.py, error key)."""
-    code = extract_code(pasted)
-    if not code:
-        return {}, "invalid_code"
+class _Login:
+    """One login attempt inside a flow: email + emailed code (default), or pasting the code (fallback)."""
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+        self.email: str | None = None
+        self._otp: OtpLogin | None = None
+        self._session: aiohttp.ClientSession | None = None
+        self._manual: LoginRequest | None = None
+
+    async def send_code(self, email: str) -> str | None:
+        """Ask Cineville to email a one-time code. Returns an error key or None."""
+        await self.close()
+        # Own session: Cineville's login pages use an anti-forgery cookie, which must not end up in HA's shared session
+        self._session = async_create_clientsession(self.hass)
+        self._otp = OtpLogin(self._session)
+        self.email = email.strip()
+        try:
+            await self._otp.start(self.email)
+        except CinevilleLoginPageError as err:
+            _LOGGER.warning("Cineville's login page looks different than expected: %s", err)
+            return "login_page_changed"
+        except CinevilleAuthError:
+            return "invalid_email"
+        except CinevilleError as err:
+            _LOGGER.warning("Cineville login failed: %s", err)
+            return "cannot_connect"
+        return None
+
+    async def verify(self, otp: str) -> tuple[dict[str, Any], str | None]:
+        """Submit the emailed code. Returns (account dict for accounts.py, error key)."""
+        if self._otp is None:
+            return {}, "login_page_changed"
+        try:
+            code = await self._otp.verify(otp)
+        except CinevilleOtpError:
+            return {}, "invalid_otp"
+        except CinevilleLoginPageError as err:
+            _LOGGER.warning("Cineville's login page looks different than expected: %s", err)
+            return {}, "login_page_changed"
+        except CinevilleError as err:
+            _LOGGER.warning("Cineville login failed: %s", err)
+            return {}, "cannot_connect"
+        account, error = await _exchange(self.hass, code, self._otp.code_verifier)
+        if not error:
+            await self.close()
+        return account, error
+
+    @property
+    def manual_url(self) -> str:
+        if self._manual is None:
+            self._manual = create_login()
+        return self._manual.authorize_url
+
+    async def paste(self, pasted: str) -> tuple[dict[str, Any], str | None]:
+        """Fallback: exchange a code pasted from the browser."""
+        code = extract_code(pasted)
+        if not code:
+            return {}, "invalid_code"
+        verifier = self._manual.code_verifier if self._manual else ""
+        account, error = await _exchange(self.hass, code, verifier)
+        if error == "login_failed":
+            self._manual = None  # a code only works once, with its own verifier: show a fresh link
+        return account, error
+
+    def new_manual_link(self) -> None:
+        self._manual = None
+
+    async def close(self) -> None:
+        if self._session is not None:
+            await self._session.close()
+            self._session = None
+        self._otp = None
+
+    @callback
+    def async_close_later(self) -> None:
+        """For flows that are abandoned halfway (FlowHandler.async_remove is not async)."""
+        if self._session is not None:
+            self.hass.async_create_task(self.close())
+
+
+async def _exchange(hass: HomeAssistant, code: str, verifier: str) -> tuple[dict[str, Any], str | None]:
+    """OAuth code -> tokens + who logged in. Returns (account dict for accounts.py, error key)."""
     session = async_get_clientsession(hass)
     auth = CinevilleAuth(session)
     try:
-        tokens: Tokens = await auth.exchange_code(code, login.code_verifier)
-        client = CinevilleClient(session, auth=auth)
-        info = await client.get_userinfo()
+        tokens: Tokens = await auth.exchange_code(code, verifier)
+        info = await CinevilleClient(session, auth=auth).get_userinfo()
     except CinevilleAuthError:
         return {}, "login_failed"
     except CinevilleError as err:
@@ -83,6 +175,7 @@ async def _complete_login(hass: HomeAssistant, login: LoginRequest, pasted: str)
     return {
         CONF_USER_ID: info["sub"],
         CONF_ACCOUNT_NAME: account_store.display_name(info),
+        CONF_EMAIL: info.get("email") or "",
         CONF_TOKENS: tokens.as_dict(),
     }, None
 
@@ -94,11 +187,16 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
         self._cities: list[City] = []
         self._city: City | None = None
         self._venues: list[Venue] = []
-        self._login: LoginRequest | None = None
+        self._login: _Login | None = None
         self._reauth_user: dict[str, Any] = {}
 
     def _client(self) -> CinevilleClient:
         return CinevilleClient(async_get_clientsession(self.hass))
+
+    @callback
+    def async_remove(self) -> None:
+        if self._login:
+            self._login.async_close_later()
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -158,36 +256,88 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"city": self._city.name},
         )
 
+    # --- re-authentication of one account --------------------------------------------------
+
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
         """One account's Cineville login expired or was revoked (entry_data names the account)."""
         self._reauth_user = dict(entry_data)
+        self._login = _Login(self.hass)
         return await self.async_step_reauth_confirm()
 
+    def _reauth_placeholders(self) -> dict[str, str]:
+        return {"name": self._reauth_user.get(CONF_ACCOUNT_NAME) or "?"}
+
     async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Step 1: email address (prefilled); Cineville emails a code."""
+        assert self._login is not None
         errors: dict[str, str] = {}
-        if self._login is None:
-            self._login = create_login()
         if user_input is not None:
-            account, error = await _complete_login(self.hass, self._login, user_input[CONF_CODE])
-            expected = self._reauth_user.get(CONF_USER_ID)
-            if not error and expected and account[CONF_USER_ID] != expected:
-                error = "wrong_account"
+            error = await self._login.send_code(user_input[CONF_EMAIL])
+            if error == "login_page_changed":
+                return await self.async_step_reauth_manual()
             if error:
                 errors["base"] = error
-                if error in ("login_failed", "wrong_account"):
-                    self._login = create_login()  # a code only works once, with its own verifier
             else:
-                entry = self._get_reauth_entry()
-                return self.async_update_reload_and_abort(entry, data=account_store.upsert(dict(entry.data), account))
+                return await self.async_step_reauth_code()
+        return self._reauth_email_form(errors)
+
+    def _reauth_email_form(self, errors: dict[str, str]) -> ConfigFlowResult:
+        assert self._login is not None
+        stored = account_store.find(dict(self._get_reauth_entry().data), self._reauth_user.get(CONF_USER_ID, ""))
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=LOGIN_SCHEMA,
+            data_schema=_email_schema(self._login.email or (stored or {}).get(CONF_EMAIL)),
             errors=errors,
-            description_placeholders={
-                "url": self._login.authorize_url,
-                "name": self._reauth_user.get(CONF_ACCOUNT_NAME) or "?",
-            },
+            description_placeholders=self._reauth_placeholders(),
         )
+
+    async def async_step_reauth_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Step 2: the code from Cineville's email."""
+        assert self._login is not None
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            account, error = await self._login.verify(user_input[CONF_CODE])
+            if error == "login_page_changed":
+                return await self.async_step_reauth_manual()
+            if not error:
+                if (result := self._finish_reauth(account)) is not None:
+                    return result
+                # Somebody else logged in: start over with the right email address
+                return self._reauth_email_form({"base": "wrong_account"})
+            errors["base"] = error
+        return self.async_show_form(
+            step_id="reauth_code",
+            data_schema=OTP_SCHEMA,
+            errors=errors,
+            description_placeholders={**self._reauth_placeholders(), "email": self._login.email or ""},
+        )
+
+    async def async_step_reauth_manual(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Fallback when Cineville's login pages changed: log in in a browser and paste the code."""
+        assert self._login is not None
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            account, error = await self._login.paste(user_input[CONF_CODE])
+            if not error:
+                if (result := self._finish_reauth(account)) is not None:
+                    return result
+                error = "wrong_account"
+                self._login.new_manual_link()
+            errors["base"] = error
+        return self.async_show_form(
+            step_id="reauth_manual",
+            data_schema=PASTE_SCHEMA,
+            errors=errors,
+            description_placeholders={**self._reauth_placeholders(), "url": self._login.manual_url},
+        )
+
+    def _finish_reauth(self, account: dict[str, Any]) -> ConfigFlowResult | None:
+        """Store the renewed login; None if somebody else logged in (the caller shows the error)."""
+        expected = self._reauth_user.get(CONF_USER_ID)
+        if expected and account[CONF_USER_ID] != expected:
+            return None
+        entry = self._get_reauth_entry()
+        return self.async_update_reload_and_abort(entry, data=account_store.upsert(dict(entry.data), account))
 
     @staticmethod
     @callback
@@ -196,11 +346,16 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class CinevilleOptionsFlow(OptionsFlowWithReload):
-    """Change the cinemas, or log in to / out of the Cineville account."""
+    """Change the cinemas, manage Cineville accounts, set the ratings keys."""
 
     def __init__(self) -> None:
         self._venues: list[Venue] = []
-        self._login: LoginRequest | None = None
+        self._login: _Login | None = None
+
+    @callback
+    def async_remove(self) -> None:
+        if self._login:
+            self._login.async_close_later()
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         return self.async_show_menu(step_id="init", menu_options=["venues", "account", "ratings"])
@@ -233,37 +388,71 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
             description_placeholders={"city": self.config_entry.data[CONF_CITY_NAME]},
         )
 
+    # --- accounts ----------------------------------------------------------------------------
+
     async def async_step_account(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Several people can be logged in; their watchlists are combined on the card."""
         connected = account_store.accounts(dict(self.config_entry.data))
-        if not connected:
-            return await self.async_step_login()
+        names = ", ".join(a.get(CONF_ACCOUNT_NAME) or "?" for a in connected)
         return self.async_show_menu(
             step_id="account",
-            menu_options=["login", "logout"],
-            description_placeholders={"names": ", ".join(a.get(CONF_ACCOUNT_NAME) or "?" for a in connected)},
+            menu_options=["login", "login_manual", *(["logout"] if connected else [])],
+            description_placeholders={"names": names or "–"},
         )
 
-    async def async_step_login(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        errors: dict[str, str] = {}
+    def _get_login(self) -> _Login:
         if self._login is None:
-            self._login = create_login()
+            self._login = _Login(self.hass)
+        return self._login
+
+    async def async_step_login(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Add an account, step 1: email address; Cineville emails a one-time code."""
+        login = self._get_login()
+        errors: dict[str, str] = {}
         if user_input is not None:
-            account, error = await _complete_login(self.hass, self._login, user_input[CONF_CODE])
+            error = await login.send_code(user_input[CONF_EMAIL])
             if error:
                 errors["base"] = error
-                if error == "login_failed":
-                    self._login = create_login()
             else:
-                # Logging in again with a connected account just renews its login
-                self._save_data(account_store.upsert(dict(self.config_entry.data), account))
-                return self.async_create_entry(data=dict(self.config_entry.options))
+                return await self.async_step_login_code()
+        return self.async_show_form(step_id="login", data_schema=_email_schema(login.email), errors=errors)
+
+    async def async_step_login_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Add an account, step 2: the code from Cineville's email."""
+        login = self._get_login()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            account, error = await login.verify(user_input[CONF_CODE])
+            if not error:
+                return self._add_account(account)
+            errors["base"] = error
         return self.async_show_form(
-            step_id="login",
-            data_schema=LOGIN_SCHEMA,
+            step_id="login_code",
+            data_schema=OTP_SCHEMA,
             errors=errors,
-            description_placeholders={"url": self._login.authorize_url},
+            description_placeholders={"email": login.email or ""},
         )
+
+    async def async_step_login_manual(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Fallback: log in in a browser and paste the code from the blank page."""
+        login = self._get_login()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            account, error = await login.paste(user_input[CONF_CODE])
+            if not error:
+                return self._add_account(account)
+            errors["base"] = error
+        return self.async_show_form(
+            step_id="login_manual",
+            data_schema=PASTE_SCHEMA,
+            errors=errors,
+            description_placeholders={"url": login.manual_url},
+        )
+
+    def _add_account(self, account: dict[str, Any]) -> ConfigFlowResult:
+        # Logging in again with a connected account just renews its login
+        self._save_data(account_store.upsert(dict(self.config_entry.data), account))
+        return self.async_create_entry(data=dict(self.config_entry.options))
 
     async def async_step_logout(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         connected = account_store.accounts(dict(self.config_entry.data))

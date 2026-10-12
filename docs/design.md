@@ -106,3 +106,8 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    "seen" = seen by everyone, partly seen shows who. Seen films: show / dim / compact (one dimmed line with time(s)
    and title, no poster) / hide. `get_program` adds `accounts`, `film.watchlist_by`, `film.seen_by`.
    Also fixed: the card filed a program under the requested day even when the server returned a different "today".
+9. ✅ **Login inside Home Assistant** (0.5.0): *Add an account* asks for the email address, Cineville emails a code,
+   the user types it into HA; `auth.OtpLogin` drives Cineville's login pages with a private cookie session
+   (see api/authentication.md). Re-authentication works the same way with the stored email prefilled and falls back
+   to the manual paste method automatically if the pages changed; *Add an account manually* stays as a fallback.
+   Accounts now also store the email address (for prefilling).
