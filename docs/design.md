@@ -103,5 +103,6 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    single account of version 1; helpers in `accounts.py`). One `AccountCoordinator` per account; an expired login
    starts re-authentication for *that* account (`async_start_reauth(data=…)`, wrong account rejected). Card: combined
    watchlists with coloured initials, filter all / anyone / everyone / one person (single account: the bookmark toggle),
-   "seen" = seen by everyone, partly seen shows who. `get_program` adds `accounts`, `film.watchlist_by`, `film.seen_by`.
+   "seen" = seen by everyone, partly seen shows who. Seen films: show / dim / compact (one dimmed line with time(s)
+   and title, no poster) / hide. `get_program` adds `accounts`, `film.watchlist_by`, `film.seen_by`.
    Also fixed: the card filed a program under the requested day even when the server returned a different "today".

@@ -66,7 +66,7 @@ view: films           # films (grouped by film) or list (chronological); switcha
 days: 7               # days in the day picker (1–8)
 show_past: false      # today: also show screenings that have already started
 watchlist: highlight  # highlight or only (also switchable on the card); needs the account login
-seen: dim             # dim, hide or show: films you've already seen
+seen: dim             # films seen by everyone: show, dim, compact (one dimmed line: time and title) or hide
 # title: Kino heute
 # max_height: 500px     # for dashboards without a grid; in sections dashboards just resize the card
 # config_entry_id: ...  # only if you set up several cities

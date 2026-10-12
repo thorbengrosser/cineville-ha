@@ -55,9 +55,10 @@ const STRINGS = {
       watchlist_highlight: "Highlight them",
       watchlist_only: "Show only them (switchable on the card)",
       seen: "Films you've already seen",
-      seen_dim: "Dim",
-      seen_hide: "Hide",
       seen_show: "Show normally",
+      seen_dim: "Dim",
+      seen_compact: "Compact (one dimmed line: time and title)",
+      seen_hide: "Hide",
       films: "Grouped by film",
       list: "Chronological list",
     },
@@ -101,9 +102,10 @@ const STRINGS = {
       watchlist_highlight: "Hervorheben",
       watchlist_only: "Nur diese zeigen (auf der Karte umschaltbar)",
       seen: "Bereits gesehene Filme",
-      seen_dim: "Abblenden",
-      seen_hide: "Ausblenden",
       seen_show: "Normal anzeigen",
+      seen_dim: "Abblenden",
+      seen_compact: "Kompakt (eine abgeblendete Zeile: Zeit und Titel)",
+      seen_hide: "Ausblenden",
       films: "Nach Film gruppiert",
       list: "Chronologische Liste",
     },
@@ -193,9 +195,10 @@ class CinevilleCard extends HTMLElement {
         {
           name: "seen",
           selector: { select: { mode: "dropdown", options: [
-            { value: "dim", label: t.seen_dim },
-            { value: "hide", label: t.seen_hide },
             { value: "show", label: t.seen_show },
+            { value: "dim", label: t.seen_dim },
+            { value: "compact", label: t.seen_compact },
+            { value: "hide", label: t.seen_hide },
           ] } },
         },
       ],
@@ -658,6 +661,21 @@ class CinevilleCard extends HTMLElement {
     return { classes: classes.join(" "), badges: badges.join("") };
   }
 
+  /** Films seen by everyone collapse to one dimmed line in "compact" mode. */
+  _isCompact(film) {
+    return this._config.seen === "compact" && film.seen;
+  }
+
+  /** A start time for the compact line, linked to the ticket shop like the chips. */
+  _compactTime(show) {
+    const time = esc(this._fmtTime(show.start));
+    const href = safeUrl(show.ticketing_url);
+    const started = new Date(show.start).getTime() < Date.now() ? " started" : "";
+    return href
+      ? `<a class="compact-time${started}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(`${show.venue.name} · ${this._t.tickets}`)}">${time}</a>`
+      : `<span class="compact-time${started}" title="${esc(show.venue.name)}">${time}</span>`;
+  }
+
   /** Coloured initials for account IDs (two letters when first letters clash). */
   _markers(ids, people) {
     const initials = (name) => {
@@ -711,6 +729,12 @@ class CinevilleCard extends HTMLElement {
         const highlight = film.highlight ? `<span class="badge highlight">${esc(highlightLabels[film.highlight] || film.highlight)}</span>` : "";
         const specials = [...new Set(filmShows.map((s) => s.specials).filter(Boolean))];
         const state = this._filmState(film, program);
+        if (this._isCompact(film)) {
+          return `<div class="film compact seen" data-film="${esc(film.id)}">
+            <span class="compact-times">${filmShows.map((s) => this._compactTime(s)).join("")}</span>
+            <span class="compact-title">${esc(film.title)}</span>
+          </div>`;
+        }
         return `<div class="film ${state.classes}" data-film="${esc(film.id)}">
           ${this._poster(film, 60, "poster")}
           <div class="film-body">
@@ -731,6 +755,14 @@ class CinevilleCard extends HTMLElement {
       .map((s) => {
         const started = new Date(s.start).getTime() < Date.now();
         const href = safeUrl(s.ticketing_url);
+        if (this._isCompact(s.film)) {
+          const line = `<div class="row-time"><span class="time">${esc(this._fmtTime(s.start))}</span></div>
+            <div class="row-body"><div class="row-title">${esc(s.film.title)}</div></div>`;
+          const cls = `row compact seen ${started ? "started" : ""}`;
+          return href
+            ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(this._t.tickets)}">${line}</a>`
+            : `<div class="${cls}">${line}</div>`;
+        }
         const end = s.end ? `–${esc(this._fmtTime(s.end))}` : "";
         const row = `
           <div class="row-time"><span class="time">${esc(this._fmtTime(s.start))}</span><span class="end">${end}</span></div>
@@ -814,6 +846,13 @@ const STYLES = `
   .toggle ha-icon { --mdc-icon-size: 22px; }
   .watchlisted { box-shadow: inset 3px 0 0 var(--accent-color, #ff9800); }
   .seen { opacity: .55; }
+  .film.compact { display: flex; align-items: baseline; gap: 10px; padding: 4px 8px; font-size: .85rem; }
+  .compact-times { display: flex; gap: 6px; flex: none; font-variant-numeric: tabular-nums; }
+  .compact-time { color: var(--primary-text-color); text-decoration: none; font-weight: 600; }
+  a.compact-time:hover { text-decoration: underline; }
+  .compact-title, .row.compact .row-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                                            color: var(--primary-text-color); font-weight: 400; }
+  .row.compact { padding: 3px 8px; font-size: .85rem; }
   .seen.started { opacity: .35; }
   .badge ha-icon { --mdc-icon-size: 12px; margin-right: 2px; vertical-align: -1px; }
   .badge.wl { background: rgba(255, 152, 0, .16); color: var(--accent-color, #ff9800); }

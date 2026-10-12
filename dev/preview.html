@@ -8,7 +8,7 @@
     Renders the real card file with a mock `hass` that answers cineville.get_program from
     dev/fixtures/program-hamburg.json. Serve the repo root (python3 -m http.server) and open /dev/preview.html.
     Query params: ?theme=dark  &lang=en  &width=380  &view=list  &height=400  &max_height=400
-                  &login=0 (not logged in)  &people=2  &time_format=12|24|language|system  &date_format=DMY|MDY|YMD  &time_zone=server
+                  &login=0 (not logged in)  &people=2  &seen=show|dim|compact|hide  &time_format=12|24|language|system  &date_format=DMY|MDY|YMD  &time_zone=server
   -->
   <style>
     :root {
@@ -106,7 +106,11 @@
     const card = document.getElementById("card");
     // ?height=400 simulates a sections-dashboard grid cell; ?max_height=400 tests the masonry option
     if (params.get("height")) card.style.height = `${params.get("height")}px`;
-    card.setConfig({ view: params.get("view") || "films", ...(params.get("max_height") ? { max_height: params.get("max_height") } : {}) });
+    card.setConfig({
+      view: params.get("view") || "films",
+      ...(params.get("max_height") ? { max_height: params.get("max_height") } : {}),
+      ...(params.get("seen") ? { seen: params.get("seen") } : {}),
+    });
     card.hass = hass;
 
     const link = (label, changes) => {
@@ -119,7 +123,8 @@
       link("de", { lang: "de" }) + link("en", { lang: "en" }) +
       link("phone 380px", { width: 380 }) + link("wide", { width: null }) +
       link("logged out", { login: "0" }) + link("1 person", { login: null, people: null }) + link("2 people", { login: null, people: "2" }) +
-      link("12h", { time_format: "12" }) + link("24h", { time_format: null });
+      link("12h", { time_format: "12" }) + link("24h", { time_format: null }) +
+      ["show", "dim", "compact", "hide"].map((m) => link(`seen: ${m}`, { seen: m })).join("");
   </script>
 </body>
 </html>
