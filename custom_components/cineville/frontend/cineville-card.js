@@ -6,7 +6,7 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.3.0";
+const CARD_VERSION = "0.3.0-alpha.1";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
 const WATCHLIST_STORAGE_KEY = "cineville-card-watchlist-only";

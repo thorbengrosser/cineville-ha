@@ -102,3 +102,7 @@ Returns `{day, today, city, timezone, logged_in, showtimes: [...]}`. Each showti
 - [`docs/api/`](docs/api/README.md): reverse-engineered documentation of the Cineville API, including the login flow.
 - [`tools/`](tools/): the login end-to-end check and the ratings matching spike.
 - [`cinevillepreview.php`](cinevillepreview.php): the original PHP page this project grew out of.
+
+## License
+
+[MIT](LICENSE)
