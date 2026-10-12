@@ -15,7 +15,8 @@ from homeassistant.loader import async_get_integration
 
 from .api import CinevilleClient
 from .auth import CinevilleAuth, Tokens
-from .const import CONF_OMDB_KEY, CONF_TMDB_KEY, CONF_TOKENS, CONF_USER_ID, DOMAIN
+from . import accounts as account_store
+from .const import CONF_ACCOUNT_NAME, CONF_OMDB_KEY, CONF_TMDB_KEY, CONF_TOKENS, CONF_USER_ID, DOMAIN
 from .coordinator import AccountCoordinator, CinevilleCoordinator, CinevilleData
 from .ratings import RatingsClient
 from .ratings_manager import RatingsManager
@@ -58,26 +59,28 @@ async def _async_register_card(hass: HomeAssistant) -> None:
 
 async def async_setup_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) -> bool:
     session = async_get_clientsession(hass)
-    auth = None
-    if entry.data.get(CONF_TOKENS) and entry.data.get(CONF_USER_ID):
-
-        @callback
-        def save_tokens(tokens: Tokens) -> None:
-            # Access tokens are renewed hourly; keep the stored copy current
-            hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_TOKENS: tokens.as_dict()})
-
-        auth = CinevilleAuth(session, Tokens.from_dict(entry.data[CONF_TOKENS]), on_tokens_updated=save_tokens)
-
-    client = CinevilleClient(session, auth=auth)
-    program = CinevilleCoordinator(hass, entry, client)
+    program = CinevilleCoordinator(hass, entry, CinevilleClient(session))
     await program.async_config_entry_first_refresh()
 
-    account = None
-    if auth is not None:
-        account = AccountCoordinator(hass, entry, client)
+    accounts: dict[str, AccountCoordinator] = {}
+    for stored in account_store.accounts(dict(entry.data)):
+        user_id = stored[CONF_USER_ID]
+
+        @callback
+        def save_tokens(tokens: Tokens, user_id: str = user_id) -> None:
+            # Access tokens are renewed hourly; keep the stored copy current
+            hass.config_entries.async_update_entry(
+                entry, data=account_store.with_tokens(dict(entry.data), user_id, tokens.as_dict())
+            )
+
+        auth = CinevilleAuth(session, Tokens.from_dict(stored[CONF_TOKENS]), on_tokens_updated=save_tokens)
+        coordinator = AccountCoordinator(
+            hass, entry, CinevilleClient(session, auth=auth), user_id, stored.get(CONF_ACCOUNT_NAME) or "?"
+        )
         # Not first_refresh: a failed login must not stop the program from loading.
-        # On an auth error the coordinator starts HA's re-authentication flow instead.
-        await account.async_refresh()
+        # On an auth error the coordinator starts re-authentication for that account instead.
+        await coordinator.async_refresh()
+        accounts[user_id] = coordinator
 
     ratings = None
     if entry.data.get(CONF_TMDB_KEY) and entry.data.get(CONF_OMDB_KEY):
@@ -95,8 +98,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) ->
         entry.async_on_unload(program.async_add_listener(update_ratings))
         update_ratings()
 
-    entry.runtime_data = CinevilleData(program=program, account=account, ratings=ratings)
+    entry.runtime_data = CinevilleData(program=program, accounts=accounts, ratings=ratings)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) -> bool:
+    """Version 1 stored one account in entry.data; version 2 keeps a list of accounts."""
+    if entry.version > 2:
+        return False  # downgrade from a future version
+    if entry.version == 1:
+        hass.config_entries.async_update_entry(entry, data=account_store.migrate_v1(dict(entry.data)), version=2)
+        _LOGGER.debug("Migrated %s to config entry version 2", entry.title)
     return True
 
 

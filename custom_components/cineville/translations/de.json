@@ -16,8 +16,8 @@
         }
       },
       "reauth_confirm": {
-        "title": "Cineville-Login erneuern",
-        "description": "Der Cineville-Login ist abgelaufen.\n\n1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
+        "title": "Cineville-Login erneuern: {name}",
+        "description": "Der Cineville-Login von **{name}** ist abgelaufen. Bitte mit diesem Konto neu anmelden.\n\n1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
         "data": {
           "code": "Code"
         }
@@ -27,7 +27,8 @@
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen.",
       "no_venues_selected": "Bitte mindestens ein Kino auswählen.",
       "invalid_code": "Das sieht nicht nach einem Code aus.",
-      "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden."
+      "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden.",
+      "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben)."
     },
     "abort": {
       "already_configured": "Diese Stadt ist bereits eingerichtet.",
@@ -54,7 +55,7 @@
         }
       },
       "login": {
-        "title": "Cineville-Konto verbinden",
+        "title": "Cineville-Konto hinzufügen",
         "description": "1. [Cineville-Login öffnen]({url}) und mit deiner E-Mail-Adresse und dem Code anmelden, den Cineville dir schickt.\n2. Danach siehst du eine leere Seite. Das ist richtig so. Drücke **Strg+U** (Seitenquelltext) und suche die Zeile mit `name=\"code\"`.\n3. Kopiere den Text in `value=\"…\"` und füge ihn unten ein (die ganze Zeile geht auch).\n\nDer Code gilt etwa 5 Minuten und nur zusammen mit diesem Link. Am einfachsten geht das am Computer.",
         "data": {
           "code": "Code"
@@ -64,10 +65,10 @@
         }
       },
       "logout": {
-        "title": "Cineville-Konto",
-        "description": "Angemeldet als **{name}**.",
+        "title": "Konto entfernen",
+        "description": "Ausgewählte Konten werden abgemeldet und von der Karte entfernt.",
         "data": {
-          "log_out": "Abmelden"
+          "remove": "Konten"
         }
       },
       "ratings": {
@@ -76,6 +77,14 @@
         "data": {
           "tmdb_api_key": "TMDB-API-Schlüssel (v3)",
           "omdb_api_key": "OMDb-API-Schlüssel"
+        }
+      },
+      "account": {
+        "title": "Cineville-Konten",
+        "description": "Verbunden: **{names}**. Die Merklisten aller verbundenen Konten werden auf der Karte zusammengeführt.",
+        "menu_options": {
+          "login": "Konto hinzufügen (oder erneut anmelden)",
+          "logout": "Konto entfernen"
         }
       }
     },
@@ -86,7 +95,8 @@
       "login_failed": "Der Code wurde nicht akzeptiert (abgelaufen, schon benutzt oder von einem anderen Link). Bitte den neuen Link oben verwenden.",
       "both_keys_needed": "Bitte beide Schlüssel eintragen (oder beide leeren).",
       "invalid_tmdb_key": "TMDB hat den Schlüssel abgelehnt.",
-      "invalid_omdb_key": "OMDb hat den Schlüssel abgelehnt."
+      "invalid_omdb_key": "OMDb hat den Schlüssel abgelehnt.",
+      "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben)."
     },
     "abort": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."
@@ -164,7 +174,7 @@
       "message": "Das Datum muss zwischen {first} und {last} liegen."
     },
     "auth_expired": {
-      "message": "Der Cineville-Login ist abgelaufen. Bitte neu anmelden."
+      "message": "Der Cineville-Login von {name} ist abgelaufen. Bitte neu anmelden."
     }
   },
   "services": {

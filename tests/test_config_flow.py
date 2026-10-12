@@ -38,7 +38,7 @@ async def test_full_flow_all_cinemas_means_whole_city(hass: HomeAssistant, mock_
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Cineville Hamburg"
-    assert result["data"] == {CONF_CITY_ID: "hamburg", CONF_CITY_NAME: "Hamburg"}
+    assert result["data"] == {CONF_CITY_ID: "hamburg", CONF_CITY_NAME: "Hamburg", "accounts": []}
     assert result["options"] == {CONF_VENUE_IDS: []}
     mock_client[1].assert_awaited_once_with("hamburg")
 

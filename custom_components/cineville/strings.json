@@ -16,8 +16,8 @@
         }
       },
       "reauth_confirm": {
-        "title": "Renew the Cineville login",
-        "description": "The Cineville login has expired.\n\n1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
+        "title": "Renew the Cineville login: {name}",
+        "description": "The Cineville login of **{name}** has expired. Please log in again with that account.\n\n1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
         "data": {
           "code": "Code"
         }
@@ -27,7 +27,8 @@
       "cannot_connect": "Could not reach Cineville. Try again later.",
       "no_venues_selected": "Select at least one cinema.",
       "invalid_code": "That doesn't look like a code.",
-      "login_failed": "The code was not accepted (expired, already used, or from another link). Please use the new link above."
+      "login_failed": "The code was not accepted (expired, already used, or from another link). Please use the new link above.",
+      "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above)."
     },
     "abort": {
       "already_configured": "This city is already set up.",
@@ -54,7 +55,7 @@
         }
       },
       "login": {
-        "title": "Connect your Cineville account",
+        "title": "Add a Cineville account",
         "description": "1. [Open the Cineville login]({url}) and log in with your email address and the code Cineville sends you.\n2. You end up on a blank page. That's expected. Press **Ctrl+U** (view page source) and find the line with `name=\"code\"`.\n3. Copy the text inside `value=\"…\"` and paste it below (pasting the whole line works too).\n\nThe code is valid for about 5 minutes and only works with this link. This is easiest on a computer.",
         "data": {
           "code": "Code"
@@ -64,10 +65,10 @@
         }
       },
       "logout": {
-        "title": "Cineville account",
-        "description": "Logged in as **{name}**.",
+        "title": "Remove an account",
+        "description": "The selected accounts are logged out and removed from the card.",
         "data": {
-          "log_out": "Log out"
+          "remove": "Accounts"
         }
       },
       "ratings": {
@@ -76,6 +77,14 @@
         "data": {
           "tmdb_api_key": "TMDB API key (v3)",
           "omdb_api_key": "OMDb API key"
+        }
+      },
+      "account": {
+        "title": "Cineville accounts",
+        "description": "Connected: **{names}**. The watchlists of all connected accounts are combined on the card.",
+        "menu_options": {
+          "login": "Add an account (or log in again)",
+          "logout": "Remove an account"
         }
       }
     },
@@ -86,7 +95,8 @@
       "login_failed": "The code was not accepted (expired, already used, or from another link). Please use the new link above.",
       "both_keys_needed": "Enter both keys (or clear both).",
       "invalid_tmdb_key": "TMDB rejected the key.",
-      "invalid_omdb_key": "OMDb rejected the key."
+      "invalid_omdb_key": "OMDb rejected the key.",
+      "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above)."
     },
     "abort": {
       "cannot_connect": "Could not reach Cineville. Try again later."
@@ -164,7 +174,7 @@
       "message": "The date must be between {first} and {last}."
     },
     "auth_expired": {
-      "message": "The Cineville login has expired. Please log in again."
+      "message": "The Cineville login of {name} has expired. Please log in again."
     }
   },
   "services": {

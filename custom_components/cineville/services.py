@@ -66,13 +66,18 @@ def async_setup_services(hass: HomeAssistant) -> None:
         showtimes = []
         for show in program.showtimes:
             item = show.as_dict()
-            item["film"]["on_watchlist"], item["film"]["seen"] = data.flags(show.film.id)
+            watchlist_by, seen_by = data.flags(show.film.id)
+            item["film"]["watchlist_by"] = watchlist_by
+            item["film"]["seen_by"] = seen_by
+            item["film"]["on_watchlist"] = bool(watchlist_by)  # on anyone's watchlist
+            item["film"]["seen"] = data.seen_by_everyone(seen_by)
             rating = data.ratings.get(show.film.id) if data.ratings else None
             item["film"]["ratings"] = rating.as_dict() if rating else None
             showtimes.append(item)
         return {
             "config_entry_id": entry.entry_id,
-            "logged_in": data.account is not None and data.account.data is not None,
+            "logged_in": bool(data.loaded_accounts()),
+            "accounts": [{"id": a.user_id, "name": a.display_name} for a in data.loaded_accounts()],
             "city": {"id": entry.data[CONF_CITY_ID], "name": entry.data[CONF_CITY_NAME]},
             "day": program.day.isoformat(),
             "today": today.isoformat(),

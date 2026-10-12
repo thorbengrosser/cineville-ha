@@ -8,6 +8,7 @@ from datetime import date
 from conftest import load_sample, make_event
 from custom_components.cineville.const import (
     CONF_ACCOUNT_NAME,
+    CONF_ACCOUNTS,
     CONF_CITY_ID,
     CONF_CITY_NAME,
     CONF_TOKENS,
@@ -46,24 +47,27 @@ def showtimes() -> list[Showtime]:
 # Production ID of "Primetime" in the sample event
 PRIMETIME = "f660827c-8cd2-4ea2-878f-b3bc930edd0c"
 USER_ID = "user-1"
+USER_2 = "user-2"
 
 
-def account_data() -> dict:
+def account(user_id: str = USER_ID, name: str = "Thorben") -> dict:
     return {
-        CONF_TOKENS: {"access_token": "access-1", "refresh_token": "refresh-1", "expires_at": time.time() + 3600},
-        CONF_USER_ID: USER_ID,
-        CONF_ACCOUNT_NAME: "Test User",
+        CONF_USER_ID: user_id,
+        CONF_ACCOUNT_NAME: name,
+        CONF_TOKENS: {"access_token": f"access-{user_id}", "refresh_token": f"refresh-{user_id}", "expires_at": time.time() + 3600},
     }
 
 
-def mock_entry(venue_ids: list[str] | None = None, *, logged_in: bool = False) -> MockConfigEntry:
-    data = {CONF_CITY_ID: "hamburg", CONF_CITY_NAME: "Hamburg"}
-    if logged_in:
-        data |= account_data()
+def mock_entry(
+    venue_ids: list[str] | None = None, *, logged_in: bool = False, accounts: list[dict] | None = None
+) -> MockConfigEntry:
+    if accounts is None:
+        accounts = [account()] if logged_in else []
     return MockConfigEntry(
         domain=DOMAIN,
         title="Cineville Hamburg",
         unique_id="hamburg",
-        data=data,
+        version=2,
+        data={CONF_CITY_ID: "hamburg", CONF_CITY_NAME: "Hamburg", CONF_ACCOUNTS: accounts},
         options={CONF_VENUE_IDS: venue_ids or []},
     )

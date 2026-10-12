@@ -9,7 +9,9 @@ CONF_CITY_ID = "city_id"
 CONF_CITY_NAME = "city_name"
 CONF_VENUE_IDS = "venue_ids"
 
-# Account data in entry.data (set by the "Cineville account" options step)
+# Logged-in Cineville accounts: entry.data[CONF_ACCOUNTS] = [{user_id, account_name, tokens}, ...]
+# (see accounts.py; config entry version 1 stored a single account directly in entry.data)
+CONF_ACCOUNTS = "accounts"
 CONF_TOKENS = "tokens"
 CONF_USER_ID = "user_id"
 CONF_ACCOUNT_NAME = "account_name"

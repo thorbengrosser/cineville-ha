@@ -12,7 +12,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 
 from . import CinevilleConfigEntry
-from .coordinator import AccountCoordinator, CinevilleCoordinator, CinevilleData
+from .coordinator import CinevilleCoordinator, CinevilleData
 from .entity import CinevilleEntity
 from .models import Showtime
 
@@ -25,7 +25,7 @@ async def async_setup_entry(
 ) -> None:
     data = entry.runtime_data
     entities: list[SensorEntity] = [UpcomingScreeningsSensor(data.program), NextScreeningSensor(data.program)]
-    if data.account is not None:
+    if data.accounts:
         entities.append(WatchlistTodaySensor(data))
     async_add_entities(entities)
 
@@ -104,7 +104,10 @@ class NextScreeningSensor(_ClockedSensor):
 
 
 class WatchlistTodaySensor(_ClockedSensor):
-    """Watchlist films (not seen yet) that still have a screening today. Only when logged in."""
+    """Films on anyone's watchlist, not yet seen by everyone, that still have a screening today.
+
+    Only created when at least one Cineville account is connected.
+    """
 
     _attr_native_unit_of_measurement = "films"
     # Keep the film list out of the recorder; it's for the UI and automations only
@@ -113,23 +116,24 @@ class WatchlistTodaySensor(_ClockedSensor):
     def __init__(self, data: CinevilleData) -> None:
         super().__init__(data.program, "watchlist_today")
         self._data = data
-        self._account: AccountCoordinator = data.account  # type: ignore[assignment]
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        self.async_on_remove(self._account.async_add_listener(self.async_write_ha_state))
+        for account in self._data.accounts.values():
+            self.async_on_remove(account.async_add_listener(self.async_write_ha_state))
 
     @property
     def available(self) -> bool:
-        return super().available and self._account.data is not None
+        return super().available and bool(self._data.loaded_accounts())
 
-    def _films(self) -> list[Showtime]:
-        """First upcoming screening of each watchlist film, in start order."""
-        first: dict[str, Showtime] = {}
+    def _films(self) -> list[tuple[Showtime, list[str]]]:
+        """First upcoming screening of each wanted film, with who wants to see it."""
+        names = {a.user_id: a.display_name for a in self._data.loaded_accounts()}
+        first: dict[str, tuple[Showtime, list[str]]] = {}
         for show in self._upcoming():
-            on_watchlist, seen = self._data.flags(show.film.id)
-            if on_watchlist and not seen and show.film.id not in first:
-                first[show.film.id] = show
+            watchlist_by, seen_by = self._data.flags(show.film.id)
+            if watchlist_by and not self._data.seen_by_everyone(seen_by) and show.film.id not in first:
+                first[show.film.id] = (show, [names[u] for u in watchlist_by])
         return list(first.values())
 
     @property
@@ -140,7 +144,8 @@ class WatchlistTodaySensor(_ClockedSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         return {
             "films": [
-                {"title": s.film.title, "start": s.start.isoformat(), "venue": s.venue.name, "language": s.language_label}
-                for s in self._films()
+                {"title": s.film.title, "start": s.start.isoformat(), "venue": s.venue.name,
+                 "language": s.language_label, "wanted_by": wanted_by}
+                for s, wanted_by in self._films()
             ]
         }

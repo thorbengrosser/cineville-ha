@@ -6,10 +6,14 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.3.0-alpha.1";
+const CARD_VERSION = "0.4.0-alpha.1";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
-const WATCHLIST_STORAGE_KEY = "cineville-card-watchlist-only";
+// Watchlist filter: "" (all films), "any", "all" (everyone's) or an account ID. The old boolean key is migrated.
+const WATCHLIST_STORAGE_KEY = "cineville-card-watchlist";
+const OLD_WATCHLIST_STORAGE_KEY = "cineville-card-watchlist-only";
+// Marker colours for the people whose watchlists are combined
+const PERSON_COLORS = ["#e91e63", "#3f51b5", "#009688", "#ff9800", "#9c27b0", "#795548"];
 
 const STRINGS = {
   en: {
@@ -36,6 +40,10 @@ const STRINGS = {
     seen: "Seen",
     votes: "votes",
     emptyWatchlist: "None of your watchlist films is showing in this selection.",
+    wlAny: "Anyone's watchlist",
+    wlEveryone: "Everyone's watchlist",
+    wlPerson: "{name}'s watchlist",
+    seenBy: "Seen by",
     editor: {
       title: "Title",
       config_entry_id: "City (only needed if you set up several)",
@@ -78,6 +86,10 @@ const STRINGS = {
     seen: "Gesehen",
     votes: "Stimmen",
     emptyWatchlist: "Kein Film von deiner Merkliste läuft in dieser Auswahl.",
+    wlAny: "Merkliste: irgendwer",
+    wlEveryone: "Merkliste: alle gemeinsam",
+    wlPerson: "Merkliste: {name}",
+    seenBy: "Gesehen von",
     editor: {
       title: "Titel",
       config_entry_id: "Stadt (nur nötig bei mehreren Städten)",
@@ -150,7 +162,7 @@ class CinevilleCard extends HTMLElement {
     this._venue = "";
     this._from = null; // null = default ("now" for today, all times otherwise)
     this._view = null;
-    this._watchlistOnly = null; // null = from config, then remembered per browser
+    this._wlMode = null; // null = from config, then remembered per browser (see WATCHLIST_STORAGE_KEY)
   }
 
   static getStubConfig() {
@@ -261,14 +273,18 @@ class CinevilleCard extends HTMLElement {
       }
       this._view = stored === "films" || stored === "list" ? stored : this._config.view;
     }
-    if (this._watchlistOnly === null) {
+    if (this._wlMode === null) {
       let stored = null;
+      let old = null;
       try {
         stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+        old = localStorage.getItem(OLD_WATCHLIST_STORAGE_KEY);
       } catch {
         /* storage unavailable */
       }
-      this._watchlistOnly = stored === null ? this._config.watchlist === "only" : stored === "1";
+      if (stored !== null) this._wlMode = stored;
+      else if (old !== null) this._wlMode = old === "1" ? "any" : "";
+      else this._wlMode = this._config.watchlist === "only" ? "any" : "";
     }
   }
 
@@ -357,9 +373,10 @@ class CinevilleCard extends HTMLElement {
         return_response: true,
       });
       const program = result.response;
-      this._programs[day] = program;
-      // The server knows the real Cineville "today"; realign if we guessed differently
-      if (program.today && this._day === day && day !== program.day) this._day = program.day;
+      // File it under the day the server says it is: when "today" is requested without a date, the
+      // server's idea of today can differ from ours (e.g. right around the 04:00 day boundary)
+      this._programs[program.day] = program;
+      if (this._day === day && day !== program.day) this._day = program.day;
     } catch (err) {
       this._errors[day] = err?.message || String(err);
     } finally {
@@ -372,10 +389,14 @@ class CinevilleCard extends HTMLElement {
     const isToday = program.day === program.today;
     const now = Date.now();
     const from = this._from ?? (isToday ? "now" : "");
-    const watchlistOnly = this._watchlistActive(program);
+    const mode = this._watchlistMode(program);
+    const everyone = (program.accounts || []).length;
     return program.showtimes.filter((s) => {
       if (this._venue && s.venue.id !== this._venue) return false;
-      if (watchlistOnly && !s.film.on_watchlist) return false;
+      const by = s.film.watchlist_by || (s.film.on_watchlist ? ["?"] : []);
+      if (mode === "any" && !by.length) return false;
+      if (mode === "all" && by.length < everyone) return false;
+      if (mode && mode !== "any" && mode !== "all" && !by.includes(mode)) return false;
       if (this._config.seen === "hide" && s.film.seen) return false;
       if (from === "now" && !this._config.show_past && new Date(s.start).getTime() < now) return false;
       if (from && from !== "now" && this._hour(s.start) < Number(from)) return false;
@@ -383,9 +404,22 @@ class CinevilleCard extends HTMLElement {
     });
   }
 
-  /** "Only my watchlist" only applies when the integration is logged in. */
-  _watchlistActive(program) {
-    return Boolean(program?.logged_in && this._watchlistOnly);
+  /** Effective watchlist filter for this program: "" when nobody is logged in or the chosen person is gone. */
+  _watchlistMode(program) {
+    if (!program?.logged_in || !this._wlMode) return "";
+    const ids = (program.accounts || []).map((a) => a.id);
+    if (this._wlMode === "any") return "any";
+    if (this._wlMode === "all") return ids.length > 1 ? "all" : "any";
+    return ids.includes(this._wlMode) ? this._wlMode : "";
+  }
+
+  _setWatchlistMode(mode) {
+    this._wlMode = mode;
+    try {
+      localStorage.setItem(WATCHLIST_STORAGE_KEY, mode);
+    } catch {
+      /* storage unavailable */
+    }
   }
 
   // --- events --------------------------------------------------------------------------
@@ -406,12 +440,7 @@ class CinevilleCard extends HTMLElement {
         /* storage unavailable */
       }
     } else if (action === "watchlist") {
-      this._watchlistOnly = !this._watchlistOnly;
-      try {
-        localStorage.setItem(WATCHLIST_STORAGE_KEY, this._watchlistOnly ? "1" : "0");
-      } catch {
-        /* storage unavailable */
-      }
+      this._setWatchlistMode(this._wlMode ? "" : "any");
     } else if (action === "retry") {
       this._fetch(this._day);
     }
@@ -422,6 +451,7 @@ class CinevilleCard extends HTMLElement {
     const el = ev.target;
     if (el.dataset.filter === "venue") this._venue = el.value;
     if (el.dataset.filter === "from") this._from = el.value;
+    if (el.dataset.filter === "watchlist") this._setWatchlistMode(el.value);
     this._render();
   }
 
@@ -439,7 +469,7 @@ class CinevilleCard extends HTMLElement {
     // only keeps its position while the same day/view/filters are shown.
     const dayStrip = this.shadowRoot.querySelector(".days");
     const scrollLeft = dayStrip ? dayStrip.scrollLeft : 0;
-    const contentKey = [this._day, this._view, this._venue, this._from, this._watchlistOnly].join("|");
+    const contentKey = [this._day, this._view, this._venue, this._from, this._wlMode].join("|");
     const oldContent = this.shadowRoot.querySelector(".content");
     const scrollTop = oldContent && contentKey === this._contentKey ? oldContent.scrollTop : 0;
     this._contentKey = contentKey;
@@ -453,7 +483,7 @@ class CinevilleCard extends HTMLElement {
       body = `<div class="state">${esc(t.loading)}</div>`;
     } else {
       const shows = this._filtered(program);
-      if (!shows.length) body = `<div class="state">${esc(this._watchlistActive(program) ? t.emptyWatchlist : t.empty)}</div>`;
+      if (!shows.length) body = `<div class="state">${esc(this._watchlistMode(program) ? t.emptyWatchlist : t.empty)}</div>`;
       else body = this._view === "list" ? this._renderList(shows, program) : this._renderFilms(shows, program);
     }
 
@@ -463,9 +493,12 @@ class CinevilleCard extends HTMLElement {
         <div class="header">
           <div class="title">${esc(title)}</div>
           <div class="actions">
-          ${program?.logged_in ? `<button class="toggle ${this._watchlistOnly ? "active" : ""}" data-action="watchlist"
-              aria-pressed="${Boolean(this._watchlistOnly)}" title="${esc(this._watchlistOnly ? t.allFilms : t.watchlistOnly)}">
-              <ha-icon icon="${this._watchlistOnly ? "mdi:bookmark" : "mdi:bookmark-outline"}"></ha-icon></button>` : ""}
+          ${program?.logged_in && (program.accounts || []).length <= 1 ? (() => {
+            const on = Boolean(this._watchlistMode(program));
+            return `<button class="toggle ${on ? "active" : ""}" data-action="watchlist" aria-pressed="${on}"
+              title="${esc(on ? t.allFilms : t.watchlistOnly)}">
+              <ha-icon icon="${on ? "mdi:bookmark" : "mdi:bookmark-outline"}"></ha-icon></button>`;
+          })() : ""}
           <div class="views" role="group">
             ${["films", "list"]
               .map(
@@ -531,7 +564,25 @@ class CinevilleCard extends HTMLElement {
       <select data-filter="from" aria-label="${esc(t.from)}">
         ${fromOptions.map(([v, label]) => `<option value="${v}" ${v === from ? "selected" : ""}>${esc(label)}</option>`).join("")}
       </select>
+      ${this._renderWatchlistSelect(program)}
     </div>`;
+  }
+
+  /** With several accounts: all films / anyone's / everyone's / one person's watchlist. */
+  _renderWatchlistSelect(program) {
+    const people = program.accounts || [];
+    if (!program.logged_in || people.length < 2) return "";
+    const t = this._t;
+    const mode = this._watchlistMode(program);
+    const options = [
+      ["", t.allFilms],
+      ["any", t.wlAny],
+      ["all", t.wlEveryone],
+      ...people.map((p) => [p.id, t.wlPerson.replace("{name}", p.name)]),
+    ];
+    return `<select data-filter="watchlist" aria-label="${esc(t.watchlist)}">
+      ${options.map(([v, label]) => `<option value="${esc(v)}" ${v === mode ? "selected" : ""}>${esc(label)}</option>`).join("")}
+    </select>`;
   }
 
   _poster(film, width, cls) {
@@ -583,19 +634,46 @@ class CinevilleCard extends HTMLElement {
   }
 
   /** Classes and badges for a film's watchlist / seen state. */
-  _filmState(film) {
+  _filmState(film, program) {
     const t = this._t;
+    const people = program?.accounts || [];
+    const several = people.length > 1;
     const classes = [];
     const badges = [];
     if (film.on_watchlist) {
       classes.push("watchlisted");
-      badges.push(`<span class="badge wl"><ha-icon icon="mdi:bookmark"></ha-icon>${esc(t.watchlist)}</span>`);
+      const markers = several ? this._markers(film.watchlist_by || [], people) : esc(t.watchlist);
+      const who = several ? this._names(film.watchlist_by || [], people) : t.watchlist;
+      badges.push(`<span class="badge wl" title="${esc(`${t.watchlist}: ${who}`)}"><ha-icon icon="mdi:bookmark"></ha-icon>${markers}</span>`);
     }
-    if (film.seen && this._config.seen !== "show") {
-      if (this._config.seen === "dim") classes.push("seen");
-      badges.push(`<span class="badge seen-badge">${esc(t.seen)}</span>`);
+    if (this._config.seen !== "show") {
+      if (film.seen) {
+        // Seen by everyone
+        if (this._config.seen === "dim") classes.push("seen");
+        badges.push(`<span class="badge seen-badge">${esc(t.seen)}</span>`);
+      } else if (several && film.seen_by?.length) {
+        badges.push(`<span class="badge seen-badge" title="${esc(`${t.seenBy}: ${this._names(film.seen_by, people)}`)}">${esc(t.seen)} ${this._markers(film.seen_by, people)}</span>`);
+      }
     }
     return { classes: classes.join(" "), badges: badges.join("") };
+  }
+
+  /** Coloured initials for account IDs (two letters when first letters clash). */
+  _markers(ids, people) {
+    const initials = (name) => {
+      const first = (name || "?").trim().charAt(0).toUpperCase();
+      const clash = people.filter((p) => (p.name || "?").trim().charAt(0).toUpperCase() === first).length > 1;
+      return clash ? (name || "?").trim().slice(0, 2) : first;
+    };
+    return people
+      .map((p, i) => ({ ...p, color: PERSON_COLORS[i % PERSON_COLORS.length] }))
+      .filter((p) => ids.includes(p.id))
+      .map((p) => `<span class="person" style="background:${p.color}">${esc(initials(p.name))}</span>`)
+      .join("");
+  }
+
+  _names(ids, people) {
+    return people.filter((p) => ids.includes(p.id)).map((p) => p.name).join(", ");
   }
 
   _chip(show) {
@@ -632,7 +710,7 @@ class CinevilleCard extends HTMLElement {
           : `<span class="film-title">${esc(film.title)}</span>`;
         const highlight = film.highlight ? `<span class="badge highlight">${esc(highlightLabels[film.highlight] || film.highlight)}</span>` : "";
         const specials = [...new Set(filmShows.map((s) => s.specials).filter(Boolean))];
-        const state = this._filmState(film);
+        const state = this._filmState(film, program);
         return `<div class="film ${state.classes}" data-film="${esc(film.id)}">
           ${this._poster(film, 60, "poster")}
           <div class="film-body">
@@ -661,7 +739,7 @@ class CinevilleCard extends HTMLElement {
             <div class="row-title">${s.film.on_watchlist ? '<ha-icon class="wl-icon" icon="mdi:bookmark"></ha-icon>' : ""}${esc(s.film.title)}</div>
             <div class="row-sub">${esc(s.venue.name)} ${this._badges(s)}${this._ratingBadges(s.film, true)}</div>
           </div>`;
-        const cls = `row ${started ? "started" : ""} ${this._filmState(s.film).classes}`;
+        const cls = `row ${started ? "started" : ""} ${this._filmState(s.film, program).classes}`;
         return href
           ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(this._t.tickets)}">${row}</a>`
           : `<div class="${cls}">${row}</div>`;
@@ -740,6 +818,8 @@ const STYLES = `
   .badge ha-icon { --mdc-icon-size: 12px; margin-right: 2px; vertical-align: -1px; }
   .badge.wl { background: rgba(255, 152, 0, .16); color: var(--accent-color, #ff9800); }
   .badge.seen-badge { background: var(--secondary-background-color); color: var(--secondary-text-color); }
+  .person { display: inline-grid; place-items: center; min-width: 14px; height: 14px; padding: 0 3px; margin-left: 2px;
+            border-radius: 7px; color: #fff; font-size: .62rem; font-weight: 700; line-height: 1; box-sizing: border-box; }
   .wl-icon { --mdc-icon-size: 14px; color: var(--accent-color, #ff9800); margin-right: 4px; vertical-align: -1px; }
   .row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-top: 1px solid var(--divider-color);
          color: inherit; text-decoration: none; }

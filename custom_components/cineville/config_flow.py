@@ -22,10 +22,12 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
+from . import accounts as account_store
 from .api import CinevilleClient
 from .auth import CinevilleAuth, LoginRequest, Tokens, create_login, extract_code
 from .const import (
     CONF_ACCOUNT_NAME,
+    CONF_ACCOUNTS,
     CONF_CITY_ID,
     CONF_CITY_NAME,
     CONF_OMDB_KEY,
@@ -57,14 +59,13 @@ def _to_stored(selected: list[str], venues: list[Venue]) -> list[str]:
 
 
 CONF_CODE = "code"
-CONF_LOG_OUT = "log_out"
-ACCOUNT_KEYS = (CONF_TOKENS, CONF_USER_ID, CONF_ACCOUNT_NAME)
+CONF_REMOVE = "remove"
 
 LOGIN_SCHEMA = vol.Schema({vol.Required(CONF_CODE): TextSelector()})
 
 
 async def _complete_login(hass: HomeAssistant, login: LoginRequest, pasted: str) -> tuple[dict[str, Any], str | None]:
-    """Exchange the pasted code. Returns (entry data updates, error key)."""
+    """Exchange the pasted code. Returns (account dict for accounts.py, error key)."""
     code = extract_code(pasted)
     if not code:
         return {}, "invalid_code"
@@ -80,20 +81,21 @@ async def _complete_login(hass: HomeAssistant, login: LoginRequest, pasted: str)
         _LOGGER.warning("Cineville login failed: %s", err)
         return {}, "cannot_connect"
     return {
-        CONF_TOKENS: tokens.as_dict(),
         CONF_USER_ID: info["sub"],
-        CONF_ACCOUNT_NAME: info.get("name") or info.get("email") or "",
+        CONF_ACCOUNT_NAME: account_store.display_name(info),
+        CONF_TOKENS: tokens.as_dict(),
     }, None
 
 
 class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         self._cities: list[City] = []
         self._city: City | None = None
         self._venues: list[Venue] = []
         self._login: LoginRequest | None = None
+        self._reauth_user: dict[str, Any] = {}
 
     def _client(self) -> CinevilleClient:
         return CinevilleClient(async_get_clientsession(self.hass))
@@ -138,7 +140,7 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 return self.async_create_entry(
                     title=f"Cineville {self._city.name}",
-                    data={CONF_CITY_ID: self._city.id, CONF_CITY_NAME: self._city.name},
+                    data={CONF_CITY_ID: self._city.id, CONF_CITY_NAME: self._city.name, CONF_ACCOUNTS: []},
                     options={CONF_VENUE_IDS: _to_stored(user_input[CONF_VENUE_IDS], self._venues)},
                 )
 
@@ -157,7 +159,8 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
-        """The Cineville login expired or was revoked."""
+        """One account's Cineville login expired or was revoked (entry_data names the account)."""
+        self._reauth_user = dict(entry_data)
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -165,18 +168,25 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
         if self._login is None:
             self._login = create_login()
         if user_input is not None:
-            updates, error = await _complete_login(self.hass, self._login, user_input[CONF_CODE])
+            account, error = await _complete_login(self.hass, self._login, user_input[CONF_CODE])
+            expected = self._reauth_user.get(CONF_USER_ID)
+            if not error and expected and account[CONF_USER_ID] != expected:
+                error = "wrong_account"
             if error:
                 errors["base"] = error
-                if error == "login_failed":
+                if error in ("login_failed", "wrong_account"):
                     self._login = create_login()  # a code only works once, with its own verifier
             else:
-                return self.async_update_reload_and_abort(self._get_reauth_entry(), data_updates=updates)
+                entry = self._get_reauth_entry()
+                return self.async_update_reload_and_abort(entry, data=account_store.upsert(dict(entry.data), account))
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=LOGIN_SCHEMA,
             errors=errors,
-            description_placeholders={"url": self._login.authorize_url},
+            description_placeholders={
+                "url": self._login.authorize_url,
+                "name": self._reauth_user.get(CONF_ACCOUNT_NAME) or "?",
+            },
         )
 
     @staticmethod
@@ -224,22 +234,29 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
         )
 
     async def async_step_account(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if self.config_entry.data.get(CONF_TOKENS):
-            return await self.async_step_logout(user_input)
-        return await self.async_step_login(user_input)
+        """Several people can be logged in; their watchlists are combined on the card."""
+        connected = account_store.accounts(dict(self.config_entry.data))
+        if not connected:
+            return await self.async_step_login()
+        return self.async_show_menu(
+            step_id="account",
+            menu_options=["login", "logout"],
+            description_placeholders={"names": ", ".join(a.get(CONF_ACCOUNT_NAME) or "?" for a in connected)},
+        )
 
     async def async_step_login(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if self._login is None:
             self._login = create_login()
         if user_input is not None:
-            updates, error = await _complete_login(self.hass, self._login, user_input[CONF_CODE])
+            account, error = await _complete_login(self.hass, self._login, user_input[CONF_CODE])
             if error:
                 errors["base"] = error
                 if error == "login_failed":
                     self._login = create_login()
             else:
-                self._save_account(updates)
+                # Logging in again with a connected account just renews its login
+                self._save_data(account_store.upsert(dict(self.config_entry.data), account))
                 return self.async_create_entry(data=dict(self.config_entry.options))
         return self.async_show_form(
             step_id="login",
@@ -249,17 +266,24 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
         )
 
     async def async_step_logout(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        connected = account_store.accounts(dict(self.config_entry.data))
         if user_input is not None:
-            if user_input.get(CONF_LOG_OUT):
-                tokens = self.config_entry.data.get(CONF_TOKENS)
-                if tokens:
-                    await CinevilleAuth(async_get_clientsession(self.hass), Tokens.from_dict(tokens)).revoke()
-                self._save_account(None)
+            remove = user_input.get(CONF_REMOVE) or []
+            session = async_get_clientsession(self.hass)
+            for account in connected:
+                if account[CONF_USER_ID] in remove:
+                    await CinevilleAuth(session, Tokens.from_dict(account[CONF_TOKENS])).revoke()
+            if remove:
+                self._save_data(account_store.remove(dict(self.config_entry.data), remove))
             return self.async_create_entry(data=dict(self.config_entry.options))
+        options = [SelectOptionDict(value=a[CONF_USER_ID], label=a.get(CONF_ACCOUNT_NAME) or "?") for a in connected]
         return self.async_show_form(
             step_id="logout",
-            data_schema=vol.Schema({vol.Required(CONF_LOG_OUT, default=False): bool}),
-            description_placeholders={"name": self.config_entry.data.get(CONF_ACCOUNT_NAME) or "?"},
+            data_schema=vol.Schema({
+                vol.Optional(CONF_REMOVE, default=[]): SelectSelector(
+                    SelectSelectorConfig(options=options, multiple=True, mode=SelectSelectorMode.LIST)
+                )
+            }),
         )
 
     async def async_step_ratings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -282,8 +306,7 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
                 new = {k: v for k, v in data.items() if k not in (CONF_TMDB_KEY, CONF_OMDB_KEY)}
                 if tmdb:
                     new |= {CONF_TMDB_KEY: tmdb, CONF_OMDB_KEY: omdb}
-                self.hass.config_entries.async_update_entry(self.config_entry, data=new)
-                self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+                self._save_data(new)
                 return self.async_create_entry(data=dict(self.config_entry.options))
 
         password = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
@@ -301,10 +324,7 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
             },
         )
 
-    def _save_account(self, updates: dict[str, Any] | None) -> None:
-        """Store (or with None: remove) the account and reload, since the options themselves don't change."""
-        data = {k: v for k, v in self.config_entry.data.items() if k not in ACCOUNT_KEYS}
-        if updates:
-            data.update(updates)
+    def _save_data(self, data: dict[str, Any]) -> None:
+        """Store changed entry data and reload (the options themselves don't change, so no automatic reload)."""
         self.hass.config_entries.async_update_entry(self.config_entry, data=data)
         self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)

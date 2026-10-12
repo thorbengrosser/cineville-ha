@@ -71,7 +71,7 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    showtimes for a day, cities, venues, tenant config, account endpoints, token exchange/refresh/revoke.
    50 tests against a local fake server (`tests/`, run with `.venv/bin/python -m pytest`). Checked against the live
    API on 2026-10-11. Note: the tenant config says `Europe/Amsterdam` for DE; we default to `Europe/Berlin` (same rules).
-2. **Ratings spike**: test TMDB/OMDb matching on a week of Hamburg films. Measure the hit rate, check the
+2. ✅ **Ratings spike**: test TMDB/OMDb matching on a week of Hamburg films. Measure the hit rate, check the
    German-title and year edge cases. Decide on the matching rules before building on them.
 3. ✅ **Integration skeleton**: config flow (city → cinemas, options flow to change cinemas), coordinator
    (today every 30 min; other days on demand, cached 30 min), sensors (`Upcoming screenings today`, `Next screening`,
@@ -99,3 +99,9 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    and a weekly run of the API smoke test against the live Cineville API. Translation URLs moved into description
    placeholders (hassfest rule). Still open: license, a GitHub release (HACS shows versions from releases), screenshots,
    repository description/topics on GitHub (HACS validation checks them).
+8. ✅ **Several accounts** (0.4.0): `entry.data["accounts"]` is a list (config entry version 2, migrated from the
+   single account of version 1; helpers in `accounts.py`). One `AccountCoordinator` per account; an expired login
+   starts re-authentication for *that* account (`async_start_reauth(data=…)`, wrong account rejected). Card: combined
+   watchlists with coloured initials, filter all / anyone / everyone / one person (single account: the bookmark toggle),
+   "seen" = seen by everyone, partly seen shows who. `get_program` adds `accounts`, `film.watchlist_by`, `film.seen_by`.
+   Also fixed: the card filed a program under the requested day even when the server returned a different "today".

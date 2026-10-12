@@ -13,8 +13,8 @@ watchlist highlighted and the films you've already seen dimmed.
   ticket links, and a "watchlist only" toggle. Times and dates follow your Home Assistant profile (language,
   12/24-hour time, time zone, date format).
 - **Sensors**: *Upcoming screenings today*, *Next screening* (a timestamp with film, cinema and ticket link as
-  attributes) and, when logged in, *Watchlist films today*, e.g. for a notification when a film from your watchlist
-  is showing tonight.
+  attributes) and, when logged in, *Watchlist films today* (with who wants to see each film), e.g. for a notification
+  when a film from your watchlist is showing tonight.
 - **An action**, `cineville.get_program`, that returns a whole day's program (used by the card, also handy in scripts).
 
 Cineville currently covers 15 German cities (Berlin, Hamburg, Köln, …).
@@ -37,9 +37,12 @@ Requires Home Assistant 2025.8 or newer.
 
 Change which cinemas are included.
 
-### Cineville account (optional)
+### Cineville accounts (optional)
 
-Log in to see your watchlist and the films you've already seen. Cineville has no passwords: you get a login link, log
+Log in to see your watchlist and the films you've already seen. Several people can connect their accounts
+(*Add an account*); their watchlists are combined on the card. Each watchlist film shows coloured initials of whose
+list it's on, a filter switches between all films, anyone's watchlist, everyone's watchlist (films you all want to see)
+or one person's, and a film only counts as seen (dimmed) once everyone has seen it. Cineville has no passwords: you get a login link, log
 in with your email address and the code Cineville emails you, and then copy one more code from the (blank) page you
 end up on into Home Assistant. The dialog walks you through it; it's easiest on a computer. After that, Home Assistant
 keeps the login fresh by itself. If it ever expires, you'll get a "re-authentication required" notice; the program
@@ -83,7 +86,8 @@ response_variable: program
 
 Returns `{day, today, city, timezone, logged_in, showtimes: [...]}`. Each showtime has `start`, `end`, `venue`,
 `language_label` (OV/OmU/OmeU/DF), `specials`, `ticketing_url` and a `film` with title, poster, director, duration,
-`on_watchlist`, `seen` and `ratings`. A Cineville day runs from 04:00 to 04:00, like on cineville.de.
+`ratings`, `watchlist_by` / `seen_by` (account IDs; names in the top-level `accounts` list), `on_watchlist`
+(on anyone's watchlist) and `seen` (seen by everyone). A Cineville day runs from 04:00 to 04:00, like on cineville.de.
 
 ## Troubleshooting
 

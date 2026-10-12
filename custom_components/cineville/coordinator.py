@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .api import CinevilleClient
 from .const import (
     ACCOUNT_UPDATE_INTERVAL,
+    CONF_ACCOUNT_NAME,
     CONF_CITY_ID,
     CONF_CITY_NAME,
     CONF_USER_ID,
@@ -119,32 +120,40 @@ class AccountData:
 
 
 class AccountCoordinator(DataUpdateCoordinator[AccountData]):
-    """Watchlist and seen films of the logged-in member.
+    """Watchlist and seen films of one logged-in member.
 
-    Kept separate from the program: if the login expires, HA asks to re-authenticate,
-    but the program keeps working.
+    Kept separate from the program: if this login expires, HA asks to re-authenticate
+    this account, while the program and the other accounts keep working.
     """
 
     config_entry: ConfigEntry
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: CinevilleClient) -> None:
+    def __init__(
+        self, hass: HomeAssistant, entry: ConfigEntry, client: CinevilleClient, user_id: str, name: str
+    ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             config_entry=entry,
-            name=f"{DOMAIN} account",
+            name=f"{DOMAIN} account {name}",
             update_interval=ACCOUNT_UPDATE_INTERVAL,
         )
         self.client = client
+        self.user_id = user_id
+        self.display_name = name
 
     async def _async_update_data(self) -> AccountData:
-        user_id = self.config_entry.data[CONF_USER_ID]
         try:
-            watchlist = await self.client.get_watchlist_ids(user_id)
-            seen = await self.client.get_seen_ids(user_id)
+            watchlist = await self.client.get_watchlist_ids(self.user_id)
+            seen = await self.client.get_seen_ids(self.user_id)
         except CinevilleAuthError as err:
-            # The coordinator starts HA's re-authentication flow for this
-            raise ConfigEntryAuthFailed(translation_domain=DOMAIN, translation_key="auth_expired") from err
+            # Re-authenticate this particular account (not ConfigEntryAuthFailed, which can't say which one)
+            self.config_entry.async_start_reauth(
+                self.hass, data={CONF_USER_ID: self.user_id, CONF_ACCOUNT_NAME: self.display_name}
+            )
+            raise UpdateFailed(
+                translation_domain=DOMAIN, translation_key="auth_expired", translation_placeholders={"name": self.display_name}
+            ) from err
         except CinevilleError as err:
             raise UpdateFailed(
                 translation_domain=DOMAIN, translation_key="update_failed", translation_placeholders={"error": str(err)}
@@ -157,12 +166,21 @@ class CinevilleData:
     """Runtime data of a config entry."""
 
     program: CinevilleCoordinator
-    account: AccountCoordinator | None = None
+    accounts: dict[str, AccountCoordinator] = field(default_factory=dict)
     ratings: RatingsManager | None = None
 
-    def flags(self, production_id: str) -> tuple[bool, bool]:
-        """(on_watchlist, seen) for a film; both False when not logged in or not loaded yet."""
-        data = self.account.data if self.account else None
-        if data is None:
-            return False, False
-        return production_id in data.watchlist, production_id in data.seen
+    def loaded_accounts(self) -> list[AccountCoordinator]:
+        """Accounts whose watchlist is currently known (an expired login drops out until renewed)."""
+        return [a for a in self.accounts.values() if a.data is not None]
+
+    def flags(self, production_id: str) -> tuple[list[str], list[str]]:
+        """(user IDs with the film on their watchlist, user IDs who have seen it)."""
+        loaded = self.loaded_accounts()
+        return (
+            [a.user_id for a in loaded if production_id in a.data.watchlist],
+            [a.user_id for a in loaded if production_id in a.data.seen],
+        )
+
+    def seen_by_everyone(self, seen_by: list[str]) -> bool:
+        loaded = self.loaded_accounts()
+        return bool(loaded) and len(seen_by) == len(loaded)
