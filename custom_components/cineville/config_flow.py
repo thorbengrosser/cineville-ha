@@ -41,7 +41,13 @@ from .const import (
     CONF_VENUE_IDS,
     DOMAIN,
 )
-from .exceptions import CinevilleAuthError, CinevilleError, CinevilleLoginPageError, CinevilleOtpError
+from .exceptions import (
+    CinevilleAuthError,
+    CinevilleError,
+    CinevilleLoginPageError,
+    CinevilleNoAccountError,
+    CinevilleOtpError,
+)
 from .models import City, Venue
 from .ratings import RatingsAuthError, RatingsClient, RatingsError
 
@@ -116,6 +122,8 @@ class _Login:
             code = await self._otp.verify(otp)
         except CinevilleOtpError:
             return {}, "invalid_otp"
+        except CinevilleNoAccountError:
+            return {}, "no_account"
         except CinevilleLoginPageError as err:
             _LOGGER.warning("Cineville's login page looks different than expected: %s", err)
             return {}, "login_page_changed"
@@ -299,6 +307,8 @@ class CinevilleConfigFlow(ConfigFlow, domain=DOMAIN):
             account, error = await self._login.verify(user_input[CONF_CODE])
             if error == "login_page_changed":
                 return await self.async_step_reauth_manual()
+            if error == "no_account":
+                return self._reauth_email_form({"base": error})
             if not error:
                 if (result := self._finish_reauth(account)) is not None:
                     return result
@@ -425,6 +435,11 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
             account, error = await login.verify(user_input[CONF_CODE])
             if not error:
                 return self._add_account(account)
+            if error == "no_account":
+                # Needs a different email address: back to the first step
+                return self.async_show_form(
+                    step_id="login", data_schema=_email_schema(login.email), errors={"base": error}
+                )
             errors["base"] = error
         return self.async_show_form(
             step_id="login_code",

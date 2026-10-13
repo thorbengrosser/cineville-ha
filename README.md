@@ -33,7 +33,7 @@ Cineville for HAss shows the [Cineville](https://cineville.de) Germany programme
 
 - 🎬 **Dashboard card**: grouped by film or as a chronological list, day picker for the coming week, cinema and start-time filters, posters, OV/OmU/OmeU/DF labels, specials, ticket links. It fits any card size, follows your theme (light and dark), and speaks English and German.
 - 🔖 **Your watchlist**: log in with your Cineville account to highlight watchlist films or show only those. Seen films can be dimmed, compacted to one line, or hidden.
-- 👥 **The whole household**: connect several accounts; coloured initials show whose watchlist a film is on, and a filter finds the films you *all* want to see.
+- 👥 **The whole household**: connect several accounts; coloured initials show whose watchlist a film is on, films on *everyone's* list get a green stripe instead of an orange one, and a filter finds the films you all want to see.
 - 🍅 **Ratings**: IMDb and Rotten Tomatoes badges (with free TMDB and OMDb API keys).
 - 🤖 **Automations**: sensors for upcoming screenings, the next screening, and watchlist films showing today, plus a `cineville.get_program` action.
 - 🔐 **Easy login**: enter your email in Home Assistant and type in the code Cineville emails you. No passwords, nothing to copy.

@@ -45,7 +45,8 @@
       "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above).",
       "invalid_email": "Cineville didn't accept this email address.",
       "invalid_otp": "The code is wrong or has expired. Please try again.",
-      "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”."
+      "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”.",
+      "no_account": "There's no Cineville account for this email address yet; Cineville was about to create a new one. Please use the address of your existing Cineville account."
     },
     "abort": {
       "already_configured": "This city is already set up.",
@@ -73,7 +74,7 @@
       },
       "login": {
         "title": "Add a Cineville account",
-        "description": "Enter the email address of your Cineville account. Cineville will then email you a code.",
+        "description": "Enter the email address of your existing Cineville account. Cineville will then email you a code.",
         "data": {
           "email": "Email address"
         }
@@ -128,7 +129,8 @@
       "wrong_account": "That was a different Cineville account. Please log in as {name} (new link above).",
       "invalid_email": "Cineville didn't accept this email address.",
       "invalid_otp": "The code is wrong or has expired. Please try again.",
-      "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”."
+      "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”.",
+      "no_account": "There's no Cineville account for this email address yet; Cineville was about to create a new one. Please use the address of your existing Cineville account."
     },
     "abort": {
       "cannot_connect": "Could not reach Cineville. Try again later."

@@ -31,6 +31,7 @@ from .exceptions import (
     CinevilleConnectionError,
     CinevilleError,
     CinevilleLoginPageError,
+    CinevilleNoAccountError,
     CinevilleOtpError,
 )
 
@@ -226,6 +227,16 @@ def _find_form(html: str, field_name: str) -> _Form | None:
     return next((f for f in parser.forms if field_name in f.fields), None)
 
 
+_NAME_FIELD = re.compile(r"first.?name|last.?name|given.?name|family.?name|vorname|nachname", re.IGNORECASE)
+
+
+def _is_signup_page(html: str) -> bool:
+    """Cineville's sign-up step for a new account: a form asking for first and last name."""
+    parser = _FormParser()
+    parser.feed(html)
+    return any(_NAME_FIELD.search(name) for form in parser.forms for name in form.fields)
+
+
 class OtpLogin:
     """One email + one-time-code login, driven step by step by the config flow.
 
@@ -286,4 +297,7 @@ class OtpLogin:
             # Wrong or expired code: the same page again, with a fresh anti-forgery token
             self._otp_form, self._page_url = retry, url
             raise CinevilleOtpError("Code not accepted")
+        if _is_signup_page(html):
+            # Unknown email address: Cineville starts creating a new account and asks for a name
+            raise CinevilleNoAccountError("No Cineville account for this email address")
         raise CinevilleLoginPageError("Unexpected page after submitting the code")

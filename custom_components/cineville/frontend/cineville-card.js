@@ -6,7 +6,7 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.5.0-alpha.3";
+const CARD_VERSION = "0.5.0-alpha.4";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
 // Watchlist filter: "" (all films), "any", "all" (everyone's) or an account ID. The old boolean key is migrated.
@@ -649,6 +649,8 @@ class CinevilleCard extends HTMLElement {
     const badges = [];
     if (film.on_watchlist) {
       classes.push("watchlisted");
+      // Green instead of orange when it's on everyone's watchlist (only meaningful with two or more people)
+      if (several && (film.watchlist_by || []).length >= people.length) classes.push("everyone");
       const markers = several ? this._markers(film.watchlist_by || [], people) : esc(t.watchlist);
       const who = several ? this._names(film.watchlist_by || [], people) : t.watchlist;
       badges.push(`<span class="badge wl" title="${esc(`${t.watchlist}: ${who}`)}"><ha-icon icon="mdi:bookmark"></ha-icon>${markers}</span>`);
@@ -849,6 +851,7 @@ const STYLES = `
   .toggle.active { color: var(--accent-color, #ff9800); background: var(--secondary-background-color); }
   .toggle ha-icon { --mdc-icon-size: 22px; }
   .watchlisted { box-shadow: inset 3px 0 0 var(--accent-color, #ff9800); }
+  .watchlisted.everyone { box-shadow: inset 3px 0 0 var(--success-color, #43a047); }
   .seen { opacity: .55; }
   .film.compact { display: flex; align-items: baseline; gap: 10px; padding: 4px 8px; font-size: .85rem; }
   .compact-times { display: flex; gap: 6px; flex: none; font-variant-numeric: tabular-nums; }

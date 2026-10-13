@@ -26,6 +26,7 @@ from custom_components.cineville.const import (
 from custom_components.cineville.exceptions import (
     CinevilleAuthError,
     CinevilleLoginPageError,
+    CinevilleNoAccountError,
     CinevilleOtpError,
 )
 from ha_helpers import CLIENT, NOW, PRIMETIME, USER_2, USER_ID, account, mock_entry, showtimes
@@ -175,6 +176,17 @@ async def test_wrong_code_can_be_retried(hass: HomeAssistant, api):
     assert result["errors"] == {"base": "invalid_otp"}
     result = await hass.config_entries.options.async_configure(result["flow_id"], {"code": "123456"})
     assert result["type"] is FlowResultType.CREATE_ENTRY
+
+
+async def test_email_without_account_goes_back_to_email_step(hass: HomeAssistant, api):
+    entry = await setup(hass, mock_entry())
+    api["otp_verify"].side_effect = CinevilleNoAccountError("new account")
+    result = await options_step(hass, entry, "login")
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {CONF_EMAIL: "typo@example.org"})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"code": "123456"})
+    assert result["step_id"] == "login"
+    assert result["errors"] == {"base": "no_account"}
+    assert entry.data[CONF_ACCOUNTS] == []
 
 
 @pytest.mark.parametrize(

@@ -45,7 +45,8 @@
       "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben).",
       "invalid_email": "Cineville hat diese E-Mail-Adresse nicht akzeptiert.",
       "invalid_otp": "Der Code stimmt nicht oder ist abgelaufen. Bitte noch einmal versuchen.",
-      "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden."
+      "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden.",
+      "no_account": "Zu dieser E-Mail-Adresse gibt es noch kein Cineville-Konto; Cineville wollte gerade ein neues anlegen. Bitte die Adresse deines bestehenden Cineville-Kontos verwenden."
     },
     "abort": {
       "already_configured": "Diese Stadt ist bereits eingerichtet.",
@@ -73,7 +74,7 @@
       },
       "login": {
         "title": "Cineville-Konto hinzufügen",
-        "description": "Gib die E-Mail-Adresse deines Cineville-Kontos ein. Cineville schickt dir daraufhin einen Code.",
+        "description": "Gib die E-Mail-Adresse deines bestehenden Cineville-Kontos ein. Cineville schickt dir daraufhin einen Code.",
         "data": {
           "email": "E-Mail-Adresse"
         }
@@ -128,7 +129,8 @@
       "wrong_account": "Das war ein anderes Cineville-Konto. Bitte mit dem Konto von {name} anmelden (neuer Link oben).",
       "invalid_email": "Cineville hat diese E-Mail-Adresse nicht akzeptiert.",
       "invalid_otp": "Der Code stimmt nicht oder ist abgelaufen. Bitte noch einmal versuchen.",
-      "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden."
+      "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden.",
+      "no_account": "Zu dieser E-Mail-Adresse gibt es noch kein Cineville-Konto; Cineville wollte gerade ein neues anlegen. Bitte die Adresse deines bestehenden Cineville-Kontos verwenden."
     },
     "abort": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."

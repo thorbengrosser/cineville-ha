@@ -19,3 +19,7 @@ class CinevilleOtpError(CinevilleAuthError):
 
 class CinevilleLoginPageError(CinevilleError):
     """Cineville's login pages look different than expected; fall back to the manual login."""
+
+
+class CinevilleNoAccountError(CinevilleError):
+    """The email address has no Cineville account (Cineville offers to create one instead)."""

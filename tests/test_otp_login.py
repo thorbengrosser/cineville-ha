@@ -8,7 +8,12 @@ from aiohttp import web
 from aiohttp.test_utils import TestServer
 
 from custom_components.cineville.auth import OtpLogin
-from custom_components.cineville.exceptions import CinevilleAuthError, CinevilleLoginPageError, CinevilleOtpError
+from custom_components.cineville.exceptions import (
+    CinevilleAuthError,
+    CinevilleLoginPageError,
+    CinevilleNoAccountError,
+    CinevilleOtpError,
+)
 
 GOOD_OTP = "123456"
 
@@ -41,6 +46,7 @@ class FakeLogin:
     def __init__(self, layout_changed: bool = False) -> None:
         self.layout_changed = layout_changed
         self.state_override: str | None = None  # simulate a callback for another login attempt
+        self.new_account = False  # unknown email: Cineville asks for a name to create an account
         self.posts: list[dict] = []
 
     def check_antiforgery(self, request: web.Request, form, token: str) -> None:
@@ -76,6 +82,11 @@ class FakeLogin:
         assert form["EmailAddress"] == "me@example.org"  # hidden fields are sent back
         if form["Input.Otp"] != GOOD_OTP:
             return web.Response(text=otp_page(form["Input.ReturnUrl"], "tok-3", "Falscher Code"), content_type="text/html")
+        if self.new_account:
+            return web.Response(text=f"""<html><body><h1>Wie heißt du?</h1><form method="post">
+              <input type="hidden" name="Input.ReturnUrl" value="{form['Input.ReturnUrl']}">
+              <input type="text" name="Input.FirstName"><input type="text" name="Input.LastName">
+              <button type="submit">Weiter</button></form></body></html>""", content_type="text/html")
         raise web.HTTPFound(form["Input.ReturnUrl"])
 
     async def callback(self, request: web.Request) -> web.Response:
@@ -141,6 +152,15 @@ async def test_changed_login_page(fake_login):
     fake_login.layout_changed = True
     with pytest.raises(CinevilleLoginPageError):
         await login(fake_login).start("me@example.org")
+
+
+async def test_unknown_email_leads_to_signup(fake_login):
+    """Cineville creates a new account for unknown addresses and asks for a name after the code."""
+    fake_login.new_account = True
+    flow = login(fake_login)
+    await flow.start("typo@example.org")
+    with pytest.raises(CinevilleNoAccountError):
+        await flow.verify(GOOD_OTP)
 
 
 async def test_verify_before_start(fake_login):
