@@ -168,10 +168,20 @@ class CinevilleData:
     program: CinevilleCoordinator
     accounts: dict[str, AccountCoordinator] = field(default_factory=dict)
     ratings: RatingsManager | None = None
+    # User IDs of the household; None = every connected account. Friends are connected but not household:
+    # their markers show, but "together" logic (seen by everyone, everyone's watchlist) only counts the household.
+    household_ids: list[str] | None = None
 
     def loaded_accounts(self) -> list[AccountCoordinator]:
         """Accounts whose watchlist is currently known (an expired login drops out until renewed)."""
         return [a for a in self.accounts.values() if a.data is not None]
+
+    def in_household(self, user_id: str) -> bool:
+        return self.household_ids is None or user_id in self.household_ids
+
+    def household(self) -> list[AccountCoordinator]:
+        """Loaded household accounts."""
+        return [a for a in self.loaded_accounts() if self.in_household(a.user_id)]
 
     def flags(self, production_id: str) -> tuple[list[str], list[str]]:
         """(user IDs with the film on their watchlist, user IDs who have seen it)."""
@@ -182,5 +192,10 @@ class CinevilleData:
         )
 
     def seen_by_everyone(self, seen_by: list[str]) -> bool:
-        loaded = self.loaded_accounts()
-        return bool(loaded) and len(seen_by) == len(loaded)
+        """Seen by the whole household (friends don't count)."""
+        household = self.household()
+        return bool(household) and all(a.user_id in seen_by for a in household)
+
+    def household_wants(self, watchlist_by: list[str]) -> bool:
+        """On the watchlist of at least one household member."""
+        return any(self.in_household(u) for u in watchlist_by)

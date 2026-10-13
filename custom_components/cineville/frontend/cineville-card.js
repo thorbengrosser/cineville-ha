@@ -6,7 +6,7 @@
  * Dependency-free web component; served and registered by the integration itself.
  */
 
-const CARD_VERSION = "0.5.0-alpha.4";
+const CARD_VERSION = "0.6.0-alpha.1";
 const REFRESH_MS = 10 * 60 * 1000;
 const VIEW_STORAGE_KEY = "cineville-card-view";
 // Watchlist filter: "" (all films), "any", "all" (everyone's) or an account ID. The old boolean key is migrated.
@@ -41,7 +41,8 @@ const STRINGS = {
     votes: "votes",
     emptyWatchlist: "None of your watchlist films is showing in this selection.",
     wlAny: "Anyone's watchlist",
-    wlEveryone: "Everyone's watchlist",
+    wlEveryone: "Whole household's watchlist",
+    friend: "friend",
     wlPerson: "{name}'s watchlist",
     seenBy: "Seen by",
     editor: {
@@ -88,7 +89,8 @@ const STRINGS = {
     votes: "Stimmen",
     emptyWatchlist: "Kein Film von deiner Merkliste läuft in dieser Auswahl.",
     wlAny: "Merkliste: irgendwer",
-    wlEveryone: "Merkliste: alle gemeinsam",
+    wlEveryone: "Merkliste: ganzer Haushalt",
+    friend: "Freund:in",
     wlPerson: "Merkliste: {name}",
     seenBy: "Gesehen von",
     editor: {
@@ -393,12 +395,12 @@ class CinevilleCard extends HTMLElement {
     const now = Date.now();
     const from = this._from ?? (isToday ? "now" : "");
     const mode = this._watchlistMode(program);
-    const everyone = (program.accounts || []).length;
+    const household = this._household(program).map((p) => p.id);
     return program.showtimes.filter((s) => {
       if (this._venue && s.venue.id !== this._venue) return false;
       const by = s.film.watchlist_by || (s.film.on_watchlist ? ["?"] : []);
       if (mode === "any" && !by.length) return false;
-      if (mode === "all" && by.length < everyone) return false;
+      if (mode === "all" && !household.every((id) => by.includes(id))) return false;
       if (mode && mode !== "any" && mode !== "all" && !by.includes(mode)) return false;
       if (this._config.seen === "hide" && s.film.seen) return false;
       if (from === "now" && !this._config.show_past && new Date(s.start).getTime() < now) return false;
@@ -407,12 +409,17 @@ class CinevilleCard extends HTMLElement {
     });
   }
 
+  /** Household members among the loaded accounts (accounts without the flag count as household). */
+  _household(program) {
+    return (program?.accounts || []).filter((p) => p.household !== false);
+  }
+
   /** Effective watchlist filter for this program: "" when nobody is logged in or the chosen person is gone. */
   _watchlistMode(program) {
     if (!program?.logged_in || !this._wlMode) return "";
     const ids = (program.accounts || []).map((a) => a.id);
     if (this._wlMode === "any") return "any";
-    if (this._wlMode === "all") return ids.length > 1 ? "all" : "any";
+    if (this._wlMode === "all") return this._household(program).length > 1 ? "all" : "any";
     return ids.includes(this._wlMode) ? this._wlMode : "";
   }
 
@@ -580,7 +587,7 @@ class CinevilleCard extends HTMLElement {
     const options = [
       ["", t.allFilms],
       ["any", t.wlAny],
-      ["all", t.wlEveryone],
+      ...(this._household(program).length > 1 ? [["all", t.wlEveryone]] : []),
       ...people.map((p) => [p.id, t.wlPerson.replace("{name}", p.name)]),
     ];
     return `<select data-filter="watchlist" aria-label="${esc(t.watchlist)}">
@@ -644,13 +651,17 @@ class CinevilleCard extends HTMLElement {
   _filmState(film, program) {
     const t = this._t;
     const people = program?.accounts || [];
+    const household = this._household(program);
     const several = people.length > 1;
+    const by = film.watchlist_by || [];
     const classes = [];
     const badges = [];
     if (film.on_watchlist) {
-      classes.push("watchlisted");
-      // Green instead of orange when it's on everyone's watchlist (only meaningful with two or more people)
-      if (several && (film.watchlist_by || []).length >= people.length) classes.push("everyone");
+      // The stripe means "the household wants this"; a friend's wish only shows as their marker
+      const householdWants = !several || household.some((p) => by.includes(p.id));
+      if (householdWants) classes.push("watchlisted");
+      // Green instead of orange when the whole household wants it (only meaningful with two or more members)
+      if (household.length > 1 && household.every((p) => by.includes(p.id))) classes.push("everyone");
       const markers = several ? this._markers(film.watchlist_by || [], people) : esc(t.watchlist);
       const who = several ? this._names(film.watchlist_by || [], people) : t.watchlist;
       badges.push(`<span class="badge wl" title="${esc(`${t.watchlist}: ${who}`)}"><ha-icon icon="mdi:bookmark"></ha-icon>${markers}</span>`);
@@ -692,7 +703,11 @@ class CinevilleCard extends HTMLElement {
     return people
       .map((p, i) => ({ ...p, color: PERSON_COLORS[i % PERSON_COLORS.length] }))
       .filter((p) => ids.includes(p.id))
-      .map((p) => `<span class="person" style="background:${p.color}">${esc(initials(p.name))}</span>`)
+      .map((p) =>
+        p.household === false
+          ? `<span class="person friend" style="color:${p.color};border-color:${p.color}" title="${esc(`${p.name} (${this._t.friend})`)}">${esc(initials(p.name))}</span>`
+          : `<span class="person" style="background:${p.color}" title="${esc(p.name)}">${esc(initials(p.name))}</span>`
+      )
       .join("");
   }
 
@@ -770,14 +785,16 @@ class CinevilleCard extends HTMLElement {
             : `<div class="${cls}">${line}</div>`;
         }
         const end = s.end ? `–${esc(this._fmtTime(s.end))}` : "";
+        const state = this._filmState(s.film, program);
+        const star = state.classes.includes("watchlisted") ? '<ha-icon class="wl-icon" icon="mdi:bookmark"></ha-icon>' : "";
         const row = `
           <div class="row-time"><span class="time">${esc(this._fmtTime(s.start))}</span><span class="end">${end}</span></div>
           ${this._poster(s.film, 36, "thumb")}
           <div class="row-body">
-            <div class="row-title">${s.film.on_watchlist ? '<ha-icon class="wl-icon" icon="mdi:bookmark"></ha-icon>' : ""}${esc(s.film.title)}</div>
+            <div class="row-title">${star}${esc(s.film.title)}</div>
             <div class="row-sub">${esc(s.venue.name)} ${this._badges(s)}${this._ratingBadges(s.film, true)}</div>
           </div>`;
-        const cls = `row ${started ? "started" : ""} ${this._filmState(s.film, program).classes}`;
+        const cls = `row ${started ? "started" : ""} ${state.classes}`;
         return href
           ? `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(this._t.tickets)}">${row}</a>`
           : `<div class="${cls}">${row}</div>`;
@@ -864,6 +881,7 @@ const STYLES = `
   .badge ha-icon { --mdc-icon-size: 12px; margin-right: 2px; vertical-align: -1px; }
   .badge.wl { background: rgba(255, 152, 0, .16); color: var(--accent-color, #ff9800); }
   .badge.seen-badge { background: var(--secondary-background-color); color: var(--secondary-text-color); }
+  .person.friend { background: transparent; border: 1.5px solid; }
   .person { display: inline-grid; place-items: center; min-width: 14px; height: 14px; padding: 0 3px; margin-left: 2px;
             border-radius: 7px; color: #fff; font-size: .62rem; font-weight: 700; line-height: 1; box-sizing: border-box; }
   .wl-icon { --mdc-icon-size: 14px; color: var(--accent-color, #ff9800); margin-right: 4px; vertical-align: -1px; }

@@ -100,6 +100,7 @@
         "menu_options": {
           "login": "Konto hinzufügen",
           "login_manual": "Konto manuell hinzufügen (Notlösung)",
+          "household": "Haushalt festlegen",
           "logout": "Konto entfernen"
         }
       },
@@ -116,6 +117,13 @@
         "data": {
           "code": "Code"
         }
+      },
+      "household": {
+        "title": "Haushalt",
+        "description": "Wer gehört zum Haushalt? Alle anderen verbundenen Konten gelten als Freunde: Ihre Merklisten und gesehenen Filme erscheinen auf der Karte, aber „gesehen“ (abgeblendet), der grüne Streifen und „ganzer Haushalt“ zählen nur den Haushalt.",
+        "data": {
+          "household": "Haushalt"
+        }
       }
     },
     "error": {
@@ -130,7 +138,8 @@
       "invalid_email": "Cineville hat diese E-Mail-Adresse nicht akzeptiert.",
       "invalid_otp": "Der Code stimmt nicht oder ist abgelaufen. Bitte noch einmal versuchen.",
       "login_page_changed": "Die Login-Seite von Cineville sieht anders aus als erwartet. Bitte „Konto manuell hinzufügen“ verwenden.",
-      "no_account": "Zu dieser E-Mail-Adresse gibt es noch kein Cineville-Konto; Cineville wollte gerade ein neues anlegen. Bitte die Adresse deines bestehenden Cineville-Kontos verwenden."
+      "no_account": "Zu dieser E-Mail-Adresse gibt es noch kein Cineville-Konto; Cineville wollte gerade ein neues anlegen. Bitte die Adresse deines bestehenden Cineville-Kontos verwenden.",
+      "no_household_selected": "Bitte mindestens ein Konto auswählen."
     },
     "abort": {
       "cannot_connect": "Cineville ist nicht erreichbar. Bitte später erneut versuchen."

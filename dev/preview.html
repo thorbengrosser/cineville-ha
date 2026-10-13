@@ -66,8 +66,12 @@
 
     // Simulate logged-in accounts (?people=2 for two): mark films as on watchlists / seen, deterministically
     const loggedIn = params.get("login") !== "0";
+    // ?friends=1 adds a friend: connected, but not part of the household
     const people = loggedIn
-      ? [{ id: "u1", name: "Alex" }, { id: "u2", name: "Sam" }].slice(0, Number(params.get("people") || 1))
+      ? [
+          ...[{ id: "u1", name: "Alex", household: true }, { id: "u2", name: "Sam", household: true }].slice(0, Number(params.get("people") || 1)),
+          ...(params.get("friends") ? [{ id: "u3", name: "Kim", household: false }] : []),
+        ]
       : [];
     const filmIds = [...new Set(Object.values(fixture).flatMap((p) => p.showtimes.map((s) => s.film.id)))].sort();
     for (const program of Object.values(fixture)) {
@@ -75,12 +79,13 @@
       program.accounts = people;
       for (const show of program.showtimes) {
         const i = filmIds.indexOf(show.film.id);
-        const wants = { u1: i % 4 === 0, u2: i % 3 === 0 };
-        const saw = { u1: i % 6 === 1, u2: i % 5 === 1 || i % 6 === 1 };
+        const wants = { u1: i % 4 === 0, u2: i % 3 === 0, u3: i % 5 === 2 || i % 12 === 0 };
+        const saw = { u1: i % 6 === 1, u2: i % 5 === 1 || i % 6 === 1, u3: i % 7 === 3 };
         show.film.watchlist_by = people.filter((p) => wants[p.id]).map((p) => p.id);
         show.film.seen_by = people.filter((p) => saw[p.id]).map((p) => p.id);
         show.film.on_watchlist = show.film.watchlist_by.length > 0;
-        show.film.seen = people.length > 0 && show.film.seen_by.length === people.length;
+        const household = people.filter((p) => p.household);
+        show.film.seen = household.length > 0 && household.every((p) => show.film.seen_by.includes(p.id));
       }
     }
 

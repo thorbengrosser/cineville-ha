@@ -100,6 +100,7 @@
         "menu_options": {
           "login": "Add an account",
           "login_manual": "Add an account manually (fallback)",
+          "household": "Choose the household",
           "logout": "Remove an account"
         }
       },
@@ -116,6 +117,13 @@
         "data": {
           "code": "Code"
         }
+      },
+      "household": {
+        "title": "Household",
+        "description": "Who belongs to the household? All other connected accounts count as friends: their watchlists and seen films show on the card, but “seen” (dimmed), the green stripe and “whole household” only count the household.",
+        "data": {
+          "household": "Household"
+        }
       }
     },
     "error": {
@@ -130,7 +138,8 @@
       "invalid_email": "Cineville didn't accept this email address.",
       "invalid_otp": "The code is wrong or has expired. Please try again.",
       "login_page_changed": "Cineville's login page looks different than expected. Please use “Add an account manually”.",
-      "no_account": "There's no Cineville account for this email address yet; Cineville was about to create a new one. Please use the address of your existing Cineville account."
+      "no_account": "There's no Cineville account for this email address yet; Cineville was about to create a new one. Please use the address of your existing Cineville account.",
+      "no_household_selected": "Select at least one account."
     },
     "abort": {
       "cannot_connect": "Could not reach Cineville. Try again later."

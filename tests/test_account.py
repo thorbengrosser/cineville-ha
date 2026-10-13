@@ -18,6 +18,7 @@ from custom_components.cineville.const import (
     CONF_CITY_ID,
     CONF_CITY_NAME,
     CONF_EMAIL,
+    CONF_HOUSEHOLD,
     CONF_TOKENS,
     CONF_USER_ID,
     DOMAIN,
@@ -219,7 +220,7 @@ async def test_second_account_is_added(hass: HomeAssistant, api):
 
     assert [a[CONF_ACCOUNT_NAME] for a in entry.data[CONF_ACCOUNTS]] == ["Thorben", "Anna"]
     response = await program(hass)
-    assert response["accounts"] == [{"id": USER_ID, "name": "Thorben"}, {"id": USER_2, "name": "Anna"}]
+    assert response["accounts"] == [{"id": USER_ID, "name": "Thorben", "household": True}, {"id": USER_2, "name": "Anna", "household": True}]
     assert response["showtimes"][0]["film"]["watchlist_by"] == [USER_ID, USER_2]
     assert hass.states.get(WATCHLIST_SENSOR).attributes["films"][0]["wanted_by"] == ["Thorben", "Anna"]
 
@@ -275,7 +276,7 @@ async def test_remove_one_account(hass: HomeAssistant, api):
     api["revoke"].assert_awaited_once()
     assert [a[CONF_USER_ID] for a in entry.data[CONF_ACCOUNTS]] == [USER_ID]
     assert entry.state is ConfigEntryState.LOADED
-    assert (await program(hass))["accounts"] == [{"id": USER_ID, "name": "Thorben"}]
+    assert (await program(hass))["accounts"] == [{"id": USER_ID, "name": "Thorben", "household": True}]
 
 
 # --- combined flags -------------------------------------------------------------------
@@ -321,7 +322,7 @@ async def test_expired_login_reauths_that_account_only(hass: HomeAssistant, api)
     # The program and the other account keep working
     assert entry.state is ConfigEntryState.LOADED
     assert hass.states.get("sensor.cineville_hamburg_upcoming_screenings_today").state == "2"
-    assert (await program(hass))["accounts"] == [{"id": USER_ID, "name": "Thorben"}]
+    assert (await program(hass))["accounts"] == [{"id": USER_ID, "name": "Thorben", "household": True}]
 
     [flow] = hass.config_entries.flow.async_progress()
     assert flow["context"]["source"] == config_entries.SOURCE_REAUTH
@@ -366,3 +367,73 @@ async def test_reauth_falls_back_to_manual_when_the_login_page_changed(hass: Hom
     assert result["reason"] == "reauth_successful"
     await hass.async_block_till_done()
     assert entry.data[CONF_ACCOUNTS][0][CONF_TOKENS]["access_token"] == "new-access"
+
+
+# --- household vs friends ---------------------------------------------------------------
+
+USER_3 = "user-3"
+
+
+def three_people():
+    return [account(), account(USER_2, "Anna"), account(USER_3, "Kim")]
+
+
+async def test_household_step(hass: HomeAssistant, api):
+    entry = await setup(hass, mock_entry(accounts=three_people()))
+    result = await options_step(hass, entry)
+    assert "household" in result["menu_options"]
+
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "household"})
+    assert result["step_id"] == "household"
+    [field] = list(result["data_schema"].schema)
+    assert field.default() == [USER_ID, USER_2, USER_3]  # nobody chosen yet = everyone
+
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {CONF_HOUSEHOLD: []})
+    assert result["errors"] == {CONF_HOUSEHOLD: "no_household_selected"}
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {CONF_HOUSEHOLD: [USER_ID, USER_2]})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.options[CONF_HOUSEHOLD] == [USER_ID, USER_2]
+    assert entry.runtime_data.household_ids == [USER_ID, USER_2]  # reloaded with the new setting
+
+
+async def test_household_menu_needs_two_accounts(hass: HomeAssistant, api):
+    entry = await setup(hass, mock_entry(logged_in=True))
+    result = await options_step(hass, entry)
+    assert "household" not in result["menu_options"]
+
+
+async def test_friends_dont_count_for_seen_or_the_sensor(hass: HomeAssistant, api):
+    # Thorben and Anna are the household, Kim is a friend
+    api["lists"]["watchlist"] = {USER_ID: set(), USER_2: set(), USER_3: {"other-film", PRIMETIME}}
+    api["lists"]["seen"] = {USER_ID: {PRIMETIME}, USER_2: {PRIMETIME}, USER_3: set()}
+    entry = mock_entry(accounts=three_people())
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_HOUSEHOLD: [USER_ID, USER_2]})
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    response = await program(hass)
+    assert response["accounts"] == [
+        {"id": USER_ID, "name": "Thorben", "household": True},
+        {"id": USER_2, "name": "Anna", "household": True},
+        {"id": USER_3, "name": "Kim", "household": False},
+    ]
+    film = response["showtimes"][0]["film"]
+    assert film["watchlist_by"] == [USER_3]  # the friend's wish is still reported
+    assert film["seen"] is True  # the whole household has seen it; Kim hasn't, but Kim is a friend
+    # Only a friend wants it: not a household watchlist film
+    assert hass.states.get(WATCHLIST_SENSOR).state == "0"
+
+
+async def test_removing_an_account_also_removes_it_from_the_household(hass: HomeAssistant, api):
+    entry = mock_entry(accounts=three_people())
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_HOUSEHOLD: [USER_ID, USER_3]})
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await options_step(hass, entry, "logout")
+    await hass.config_entries.options.async_configure(result["flow_id"], {"remove": [USER_3]})
+    await hass.async_block_till_done()
+    assert entry.options[CONF_HOUSEHOLD] == [USER_ID]

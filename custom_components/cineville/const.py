@@ -12,6 +12,8 @@ CONF_VENUE_IDS = "venue_ids"
 # Logged-in Cineville accounts: entry.data[CONF_ACCOUNTS] = [{user_id, account_name, tokens}, ...]
 # (see accounts.py; config entry version 1 stored a single account directly in entry.data)
 CONF_ACCOUNTS = "accounts"
+# entry.options: user IDs that form the household (the rest are friends). Missing = everyone is household.
+CONF_HOUSEHOLD = "household"
 CONF_TOKENS = "tokens"
 CONF_EMAIL = "email"
 CONF_USER_ID = "user_id"

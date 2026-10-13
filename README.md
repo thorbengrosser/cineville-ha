@@ -33,7 +33,7 @@ Cineville for HAss shows the [Cineville](https://cineville.de) Germany programme
 
 - 🎬 **Dashboard card**: grouped by film or as a chronological list, day picker for the coming week, cinema and start-time filters, posters, OV/OmU/OmeU/DF labels, specials, ticket links. It fits any card size, follows your theme (light and dark), and speaks English and German.
 - 🔖 **Your watchlist**: log in with your Cineville account to highlight watchlist films or show only those. Seen films can be dimmed, compacted to one line, or hidden.
-- 👥 **The whole household**: connect several accounts; coloured initials show whose watchlist a film is on, films on *everyone's* list get a green stripe instead of an orange one, and a filter finds the films you all want to see.
+- 👥 **Household and friends**: connect several accounts; coloured initials show whose watchlist a film is on. Choose who's in your household: films the whole household wants get a green stripe, a filter finds them, and a film only counts as seen once the whole household has seen it. Friends' wishes and seen films still show, with outlined initials.
 - 🍅 **Ratings**: IMDb and Rotten Tomatoes badges (with free TMDB and OMDb API keys).
 - 🤖 **Automations**: sensors for upcoming screenings, the next screening, and watchlist films showing today, plus a `cineville.get_program` action.
 - 🔐 **Easy login**: enter your email in Home Assistant and type in the code Cineville emails you. No passwords, nothing to copy.
@@ -64,7 +64,7 @@ Afterwards, *Configure* on the integration has three pages:
 | Page | What it does |
 |---|---|
 | **Cinemas** | Change which cinemas are included. |
-| **Cineville account** | *Add an account*: enter your email address, then the code Cineville emails you. Add as many people as you like; their watchlists are combined on the card. *Add an account manually* is a fallback in case Cineville changes their login pages. *Remove an account* logs out. If a login ever expires, Home Assistant asks you to renew it; the programme keeps working meanwhile. |
+| **Cineville account** | *Add an account*: enter your email address, then the code Cineville emails you. Add as many people as you like; their watchlists are combined on the card. *Choose the household* decides who counts for "seen by everyone" and the green "whole household" stripe; everyone else counts as a friend. *Add an account manually* is a fallback in case Cineville changes their login pages. *Remove an account* logs out. If a login ever expires, Home Assistant asks you to renew it; the programme keeps working meanwhile. |
 | **Ratings** | Two free API keys: [TMDB](https://www.themoviedb.org/settings/api) finds the film (Cineville only has German titles) and [OMDb](https://www.omdbapi.com/apikey.aspx) provides the ratings. Ratings are cached and the integration stays well within OMDb's free 1,000 requests per day. IMDb ratings with fewer than 100 votes are hidden; brand-new German releases often have no rating yet. |
 
 ## 🎬 The card
@@ -84,8 +84,8 @@ watchlist: highlight  # highlight or only; switchable on the card
 | `view` | `films` | `films` (grouped by film, with poster and description) or `list` (one row per screening). |
 | `days` | `7` | How many days the day picker offers (1–8). A Cineville day runs from 04:00 to 04:00, so a late show after midnight still belongs to "today". |
 | `show_past` | `false` | Also show today's screenings that have already started. |
-| `watchlist` | `highlight` | `highlight` watchlist films, or show `only` those. With several accounts, a dropdown picks anyone's, everyone's or one person's watchlist. |
-| `seen` | `dim` | Films everyone has seen: `show`, `dim`, `compact` (one dimmed line with time and title) or `hide`. |
+| `watchlist` | `highlight` | `highlight` watchlist films, or show `only` those. With several accounts, a dropdown picks anyone's, the whole household's or one person's watchlist. |
+| `seen` | `dim` | Films the whole household has seen: `show`, `dim`, `compact` (one dimmed line with time and title) or `hide`. |
 | `title` | `Cineville <city>` | Card title. |
 | `max_height` | none | Maximum height, e.g. `500px`, for dashboards without a grid. In sections dashboards, just resize the card. |
 | `config_entry_id` | none | Only needed if you set up several cities. |
@@ -98,7 +98,7 @@ The chosen view and watchlist filter are remembered per browser. Times and dates
 |---|---|---|
 | `sensor.cineville_<city>_upcoming_screenings_today` | screenings still to come today | `films`, `screenings_total`, `day` |
 | `sensor.cineville_<city>_next_screening` | start time of the next screening | `film`, `venue`, `language`, `specials`, `end`, `poster`, `ticketing_url` |
-| `sensor.cineville_<city>_watchlist_films_today` | watchlist films (not yet seen by everyone) still showing today | `films`: title, start, venue, language, who wants to see it |
+| `sensor.cineville_<city>_watchlist_films_today` | household watchlist films (not yet seen by the whole household) still showing today | `films`: title, start, venue, language, who wants to see it |
 
 Get a notification when a film from your watchlist is on today:
 
@@ -131,7 +131,7 @@ response_variable: program
 <details>
 <summary>What's in the response</summary>
 
-`{day, today, city, timezone, logged_in, accounts, showtimes: [...]}`. Each showtime has `start`, `end`, `venue`, `language_label` (OV/OmU/OmeU/DF), `specials`, `ticketing_url` and a `film` with title, poster, director, duration, `ratings`, `watchlist_by` / `seen_by` (account IDs; names in `accounts`), `on_watchlist` (on anyone's watchlist) and `seen` (seen by everyone).
+`{day, today, city, timezone, logged_in, accounts, showtimes: [...]}`. `accounts` lists `{id, name, household}`. Each showtime has `start`, `end`, `venue`, `language_label` (OV/OmU/OmeU/DF), `specials`, `ticketing_url` and a `film` with title, poster, director, duration, `ratings`, `watchlist_by` / `seen_by` (account IDs), `on_watchlist` (on anyone's watchlist) and `seen` (seen by the whole household).
 
 </details>
 

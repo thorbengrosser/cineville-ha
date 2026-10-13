@@ -104,7 +104,7 @@ class NextScreeningSensor(_ClockedSensor):
 
 
 class WatchlistTodaySensor(_ClockedSensor):
-    """Films on anyone's watchlist, not yet seen by everyone, that still have a screening today.
+    """Films on a household member's watchlist, not yet seen by the whole household, still showing today.
 
     Only created when at least one Cineville account is connected.
     """
@@ -132,7 +132,8 @@ class WatchlistTodaySensor(_ClockedSensor):
         first: dict[str, tuple[Showtime, list[str]]] = {}
         for show in self._upcoming():
             watchlist_by, seen_by = self._data.flags(show.film.id)
-            if watchlist_by and not self._data.seen_by_everyone(seen_by) and show.film.id not in first:
+            # Household watchlists only; friends' wishes are on the card, not in this sensor
+            if self._data.household_wants(watchlist_by) and not self._data.seen_by_everyone(seen_by) and show.film.id not in first:
                 first[show.film.id] = (show, [names[u] for u in watchlist_by])
         return list(first.values())
 

@@ -116,3 +116,8 @@ them. Ratings for new releases change quickly, so cache missing ratings for a sh
    `add_extra_js_url`. Dashboards wait for resources before drawing cards; the extra-JS route loaded in parallel, so on
    a fresh page load the card sometimes showed "Configuration error" until a reload. YAML-mode resources fall back to
    `add_extra_js_url`.
+11. ✅ **Household and friends** (0.6.0): `entry.options["household"]` lists the household's user IDs (missing = every
+   connected account; once chosen, new accounts start as friends; removing an account also removes it from the list).
+   Friends' watchlists and seen films are reported (`watchlist_by`, `seen_by`, `accounts[].household = false`) and
+   shown as outlined initials, but only the household counts for `film.seen`, the green stripe, the "whole household"
+   filter and the *Watchlist films today* sensor. A film only a friend wants gets no stripe, just the friend's marker.

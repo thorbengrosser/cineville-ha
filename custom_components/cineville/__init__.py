@@ -17,7 +17,7 @@ from homeassistant.loader import async_get_integration
 from .api import CinevilleClient
 from .auth import CinevilleAuth, Tokens
 from . import accounts as account_store
-from .const import CONF_ACCOUNT_NAME, CONF_OMDB_KEY, CONF_TMDB_KEY, CONF_TOKENS, CONF_USER_ID, DOMAIN
+from .const import CONF_ACCOUNT_NAME, CONF_HOUSEHOLD, CONF_OMDB_KEY, CONF_TMDB_KEY, CONF_TOKENS, CONF_USER_ID, DOMAIN
 from .coordinator import AccountCoordinator, CinevilleCoordinator, CinevilleData
 from .ratings import RatingsClient
 from .ratings_manager import RatingsManager
@@ -154,7 +154,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: CinevilleConfigEntry) ->
         entry.async_on_unload(program.async_add_listener(update_ratings))
         update_ratings()
 
-    entry.runtime_data = CinevilleData(program=program, accounts=accounts, ratings=ratings)
+    household = entry.options.get(CONF_HOUSEHOLD)
+    entry.runtime_data = CinevilleData(
+        program=program, accounts=accounts, ratings=ratings, household_ids=list(household) if household is not None else None
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

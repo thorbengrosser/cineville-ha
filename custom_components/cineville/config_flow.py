@@ -34,6 +34,7 @@ from .const import (
     CONF_CITY_ID,
     CONF_CITY_NAME,
     CONF_EMAIL,
+    CONF_HOUSEHOLD,
     CONF_OMDB_KEY,
     CONF_TMDB_KEY,
     CONF_TOKENS,
@@ -406,8 +407,38 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
         names = ", ".join(a.get(CONF_ACCOUNT_NAME) or "?" for a in connected)
         return self.async_show_menu(
             step_id="account",
-            menu_options=["login", "login_manual", *(["logout"] if connected else [])],
+            menu_options=[
+                "login",
+                "login_manual",
+                *(["household"] if len(connected) > 1 else []),
+                *(["logout"] if connected else []),
+            ],
             description_placeholders={"names": names or "–"},
+        )
+
+    async def async_step_household(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Who belongs to the household. The others are friends: their markers show on the card,
+        but seen-by-everyone and everyone's-watchlist only count the household."""
+        connected = account_store.accounts(dict(self.config_entry.data))
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            selected = user_input.get(CONF_HOUSEHOLD) or []
+            if not selected:
+                errors[CONF_HOUSEHOLD] = "no_household_selected"
+            else:
+                return self.async_create_entry(data={**self.config_entry.options, CONF_HOUSEHOLD: list(selected)})
+        current = self.config_entry.options.get(CONF_HOUSEHOLD)
+        ids = [a[CONF_USER_ID] for a in connected]
+        default = [i for i in current if i in ids] if current is not None else ids
+        options = [SelectOptionDict(value=a[CONF_USER_ID], label=a.get(CONF_ACCOUNT_NAME) or "?") for a in connected]
+        return self.async_show_form(
+            step_id="household",
+            data_schema=vol.Schema({
+                vol.Required(CONF_HOUSEHOLD, default=default): SelectSelector(
+                    SelectSelectorConfig(options=options, multiple=True, mode=SelectSelectorMode.LIST)
+                )
+            }),
+            errors=errors,
         )
 
     def _get_login(self) -> _Login:
@@ -477,9 +508,12 @@ class CinevilleOptionsFlow(OptionsFlowWithReload):
             for account in connected:
                 if account[CONF_USER_ID] in remove:
                     await CinevilleAuth(session, Tokens.from_dict(account[CONF_TOKENS])).revoke()
+            options = dict(self.config_entry.options)
             if remove:
                 self._save_data(account_store.remove(dict(self.config_entry.data), remove))
-            return self.async_create_entry(data=dict(self.config_entry.options))
+                if options.get(CONF_HOUSEHOLD) is not None:
+                    options[CONF_HOUSEHOLD] = [u for u in options[CONF_HOUSEHOLD] if u not in remove]
+            return self.async_create_entry(data=options)
         options = [SelectOptionDict(value=a[CONF_USER_ID], label=a.get(CONF_ACCOUNT_NAME) or "?") for a in connected]
         return self.async_show_form(
             step_id="logout",

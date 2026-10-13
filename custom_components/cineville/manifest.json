@@ -15,5 +15,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/thorbengrosser/cineville-ha/issues",
   "requirements": [],
-  "version": "0.5.0-alpha.4"
+  "version": "0.6.0-alpha.1"
 }
