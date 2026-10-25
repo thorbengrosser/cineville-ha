@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://hacs.xyz/docs/faq/custom_repositories"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom"></a>
-  <a href="https://github.com/thorbengrosser/cineville-ha/releases"><img src="https://img.shields.io/github/v/release/thorbengrosser/cineville-ha?include_prereleases&label=release" alt="Latest release"></a>
+  <a href="https://github.com/thorbengrosser/cineville-ha/releases"><img src="https://img.shields.io/github/v/release/thorbengrosser/cineville-ha?label=release" alt="Latest release"></a>
   <a href="https://github.com/thorbengrosser/cineville-ha/actions/workflows/validate.yml"><img src="https://github.com/thorbengrosser/cineville-ha/actions/workflows/validate.yml/badge.svg" alt="Validate"></a>
   <img src="https://img.shields.io/badge/Home%20Assistant-2025.8%2B-18BCF2?logo=homeassistant&logoColor=white" alt="Home Assistant 2025.8+">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/thorbengrosser/cineville-ha" alt="License: MIT"></a>
