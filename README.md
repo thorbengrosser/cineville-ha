@@ -9,7 +9,6 @@
 </p>
 
 <p align="center">
-  <a href="https://hacs.xyz/docs/faq/custom_repositories"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom"></a>
   <a href="https://github.com/thorbengrosser/cineville-ha/releases"><img src="https://img.shields.io/github/v/release/thorbengrosser/cineville-ha?label=release" alt="Latest release"></a>
   <a href="https://github.com/thorbengrosser/cineville-ha/actions/workflows/validate.yml"><img src="https://github.com/thorbengrosser/cineville-ha/actions/workflows/validate.yml/badge.svg" alt="Validate"></a>
   <img src="https://img.shields.io/badge/Home%20Assistant-2025.8%2B-18BCF2?logo=homeassistant&logoColor=white" alt="Home Assistant 2025.8+">
@@ -42,12 +41,9 @@ Cineville currently covers 15 German cities: Aachen, Berlin, Bonn, Braunschweig,
 
 ## 📦 Installation
 
+In HACS, search for **Cineville**, download it, and restart Home Assistant.
+
 [![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=thorbengrosser&repository=cineville-ha&category=integration)
-
-Or manually in HACS:
-
-1. *HACS → ⋮ → Custom repositories*, add `https://github.com/thorbengrosser/cineville-ha` with type **Integration**.
-2. Search for **Cineville**, download it, and restart Home Assistant.
 
 Requires Home Assistant **2025.8** or newer.
 
